@@ -1,0 +1,50 @@
+version: 2.0
+
+jobs:
+
+  lint:
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - run: pip install flake8
+      - checkout
+      - run: flake8
+
+  tests:
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - run: conda install pytorch-cpu numpy -c pytorch
+      - run: pip install pytest-cov coveralls
+      - checkout
+      - run: py.test --cov config_runner --cov-report term-missing -vvv
+      - run: codecov
+
+#  docs:
+#    docker:
+#      - image: continuumio/miniconda3
+#    steps:
+#      - checkout
+
+
+workflows:
+  version: 2
+  config_runner_ci:
+    jobs:
+      - lint
+      - tests:
+          requires:
+            - lint
+
+#      - docs:
+#        requires:
+#          - tests
+#
+#      - deploy:
+#        requires:
+#          - tests
+#          - docs
+#        filters:
+#          tags:
+#            only: /v.*/
+
