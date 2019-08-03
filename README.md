@@ -1,15 +1,16 @@
 # Configuration Runner
 
-![https://travis-ci.org/vfdev-5/config_runner.svg?branch=master](https://travis-ci.org/vfdev-5/config_runner)
-![https://codecov.io/gh/vfdev-5/config_runner/branch/master/graph/badge.svg](https://codecov.io/gh/vfdev-5/config_runner)
-![https://pepy.tech/badge/config_runner](https://pepy.tech/badge/config_runner)
-![https://img.shields.io/badge/dynamic/json.svg?label=docs&url=https%3A%2F%2Fpypi.org%2Fpypi%2Fconfig_runner%2Fjson&query=%24.info.version&colorB=brightgreen&prefix=v](url to docs)
+[![CircleCI](https://circleci.com/gh/vfdev-5/config_runner/tree/master.svg?style=svg)](https://circleci.com/gh/vfdev-5/config_runner/tree/master)
+
+[![codecov](https://codecov.io/gh/vfdev-5/config_runner/branch/master/graph/badge.svg)](https://codecov.io/gh/vfdev-5/config_runner)
+
+[![Downloads](https://pepy.tech/badge/config_runner)](https://pepy.tech/project/config_runner)
 
 Command line executable to run a script with python configuration file.
 
 **Why a python file as configuration?**
 
-- Configuration file of any complexity
+- Configuration of any complexity
 - No need to serialize the configuration
 - No neeed other meta-languages for the configuration
 
