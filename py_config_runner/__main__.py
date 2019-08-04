@@ -20,5 +20,12 @@ def command(script_filepath, config_filepath, local_rank=0):
     run_script(script_filepath, config_filepath, local_rank)
 
 
+def print_script_filepath():
+    # This is helpful to call the runner using other executables
+    # Ex1. python -m launcher `py_config_runner_script` script.py config.py
+    # Ex2. python -m torch.distributed.launch `py_config_runner_script` script.py config.py
+    print(__file__)
+
+
 if __name__ == "__main__":
     command()

@@ -1,4 +1,4 @@
-from pathlib import Path
+
 from collections.abc import Sequence
 from numbers import Integral, Number
 
@@ -71,21 +71,20 @@ try:
     )
 
     TRAIN_CONFIG = TORCH_DL_BASE_CONFIG + (
-        ("train_loader", DataLoader),
+        ("train_loader", (DataLoader, Sequence)),
         ("num_epochs", Integral),
         ("criterion", torch.nn.Module),
         ("optimizer", torch.optim.Optimizer),
     )
 
     TRAINVAL_CONFIG = TRAIN_CONFIG + (
-        ("train_loader", DataLoader),
-        ("train_eval_loader", DataLoader),
-        ("val_loader", DataLoader),
+        ("train_eval_loader", (DataLoader, Sequence)),
+        ("val_loader", (DataLoader, Sequence)),
         ("lr_scheduler", object)
     )
 
     INFERENCE_CONFIG = TORCH_DL_BASE_CONFIG + (
-        ("data_loader", DataLoader),
+        ("data_loader", (DataLoader, Sequence)),
         ("weights", str),
         ("training_run_uuid", str),
     )

@@ -25,5 +25,6 @@ setup(
     entry_points="""
         [console_scripts]
             py_config_runner=py_config_runner.__main__:command
+            py_config_runner_script=py_config_runner.__main__:print_script_filepath
         """
 )
