@@ -3,7 +3,6 @@
 [![CircleCI](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master.svg?style=svg)](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master)
 [![codecov](https://codecov.io/gh/vfdev-5/py_config_runner/branch/master/graph/badge.svg)](https://codecov.io/gh/vfdev-5/py_config_runner)
 [![Documentation Status](https://readthedocs.org/projects/py-config-runner/badge/?version=latest)](https://py-config-runner.readthedocs.io/en/latest/?badge=latest)
-[![Downloads](https://pepy.tech/badge/py_config_runner)](https://pepy.tech/project/py_config_runner)
 
 Command line executable to run a script with python configuration file.
 
