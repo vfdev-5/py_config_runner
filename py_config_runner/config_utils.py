@@ -1,5 +1,5 @@
 
-from collections.abc import Sequence
+from collections.abc import Sequence, Iterable, Sized
 from numbers import Integral, Number
 
 
@@ -61,7 +61,20 @@ BASE_CONFIG = (
 )
 
 
+class SizedIterable(Sized, Iterable):
+    __slots__ = ()
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is SizedIterable:
+            if any(m in B.__dict__ for B in C.__mro__
+                   for m in ("__len__", "__iter__")):
+                return True
+        return NotImplemented
+
+
 try:
+
     import torch
     from torch.utils.data import DataLoader
 
@@ -71,20 +84,20 @@ try:
     )
 
     TRAIN_CONFIG = TORCH_DL_BASE_CONFIG + (
-        ("train_loader", (DataLoader, Sequence)),
+        ("train_loader", (DataLoader, SizedIterable)),
         ("num_epochs", Integral),
         ("criterion", torch.nn.Module),
         ("optimizer", torch.optim.Optimizer),
     )
 
     TRAINVAL_CONFIG = TRAIN_CONFIG + (
-        ("train_eval_loader", (DataLoader, Sequence)),
-        ("val_loader", (DataLoader, Sequence)),
+        ("train_eval_loader", (DataLoader, SizedIterable)),
+        ("val_loader", (DataLoader, SizedIterable)),
         ("lr_scheduler", object)
     )
 
     INFERENCE_CONFIG = TORCH_DL_BASE_CONFIG + (
-        ("data_loader", (DataLoader, Sequence)),
+        ("data_loader", (DataLoader, SizedIterable)),
         ("weights", str),
         ("training_run_uuid", str),
     )

@@ -13,14 +13,12 @@ except ImportError:
 from py_config_runner.utils import load_module, setup_logger
 
 
-def run_script(script_filepath, config_filepath, local_rank=0):
+def run_script(script_filepath, config_filepath, **kwargs):
     """Method to run experiment (defined by a script file)
 
     Args:
         script_filepath (str): input script filepath
         config_filepath (str): input configuration filepath
-        local_rank (int): local process rank for distributed computations.
-            See https://pytorch.org/docs/stable/distributed.html#launch-utility
     """
     # Add config path and current working directory to sys.path to correctly load the configuration
     sys.path.insert(0, Path(script_filepath).resolve().parent.as_posix())
@@ -34,21 +32,38 @@ def run_script(script_filepath, config_filepath, local_rank=0):
     run_fn = module.__dict__['run']
 
     # Setup configuration
-    config = load_module(config_filepath)
-
-    config.config_filepath = Path(config_filepath)
-    config.script_filepath = Path(script_filepath)
+    if kwargs.get('manual_config_load', False):
+        config = _ConfigObject(config_filepath, script_filepath)
+    else:
+        config = _setup_config(config_filepath, script_filepath)
 
     logger = logging.getLogger(exp_name)
     log_level = logging.INFO
     setup_logger(logger, log_level)
 
     try:
-        run_fn(config, logger=logger, local_rank=local_rank)
+        run_fn(config, logger=logger, **kwargs)
     except KeyboardInterrupt:
         logger.info("Catched KeyboardInterrupt -> exit")
     except Exception as e:  # noqa
         logger.exception("")
+
+
+class _ConfigObject:
+
+    def __init__(self, config_filepath, script_filepath):
+        self.config_filepath = config_filepath
+        self.script_filepath = script_filepath
+
+    def setup(self):
+        return _setup_config(self.config_filepath, self.script_filepath)
+
+
+def _setup_config(config_filepath, script_filepath):
+    config = load_module(config_filepath)
+    config.config_filepath = Path(config_filepath)
+    config.script_filepath = Path(script_filepath)
+    return config
 
 
 def _check_script(module):
