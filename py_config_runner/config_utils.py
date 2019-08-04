@@ -27,6 +27,17 @@ def assert_config(config, required_fields):
 
 
 def get_params(config, required_fields):
+    """Method to convert configuration into a dictionary matching `required_fields`.
+
+    Args:
+        config: configuration object
+        required_fields (Sequence of (str, type)): Required attributes that should exist in the configuration.
+            For example, `(("a": (int, str)), ("b", str),)`
+
+    Returns:
+        a dictionary
+
+    """
     assert_config(config, required_fields)
     params = {}
     for k, _ in required_fields:

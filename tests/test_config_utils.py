@@ -1,6 +1,6 @@
 from numbers import Integral, Number
 
-from config_runner.config_utils import assert_config, get_params, BASE_CONFIG
+from py_config_runner.config_utils import assert_config, get_params, BASE_CONFIG
 
 import pytest
 
@@ -57,7 +57,7 @@ def test_get_params():
 
 def test_get_train_params():
 
-    from config_runner.config_utils import TRAIN_CONFIG
+    from py_config_runner.config_utils import TRAIN_CONFIG
     import torch.nn as nn
     import torch.optim as optim
     from torch.utils.data import DataLoader

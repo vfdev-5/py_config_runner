@@ -10,7 +10,7 @@ except ImportError:
     from pathlib2 import Path
 
 
-from config_runner.utils import load_module, setup_logger
+from py_config_runner.utils import load_module, setup_logger
 
 
 def run_script(script_filepath, config_filepath, local_rank=0):

@@ -1,7 +1,7 @@
 
 import click
 
-from config_runner.runner import run_script
+from py_config_runner.runner import run_script
 
 
 @click.command()

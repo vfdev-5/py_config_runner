@@ -3,7 +3,7 @@ import tempfile
 import logging
 import shutil
 
-from config_runner.utils import setup_logger, set_seed, load_module, add_logger_filehandler
+from py_config_runner.utils import setup_logger, set_seed, load_module, add_logger_filehandler
 
 import pytest
 
@@ -72,6 +72,14 @@ def test_set_seed():
 
     assert torch.all(a1 == b1)
     assert torch.all(a2 == b2)
+
+
+def test_load_module_inexisting_file():
+
+    filepath = "/tmp/tmp.py"
+
+    with pytest.raises(ValueError, match="is not found"):
+        load_module(filepath)
 
 
 def test_load_module(dirname):

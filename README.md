@@ -1,10 +1,8 @@
-# Configuration Runner
+# Python Configuration Runner
 
-[![CircleCI](https://circleci.com/gh/vfdev-5/config_runner/tree/master.svg?style=svg)](https://circleci.com/gh/vfdev-5/config_runner/tree/master)
-
-[![codecov](https://codecov.io/gh/vfdev-5/config_runner/branch/master/graph/badge.svg)](https://codecov.io/gh/vfdev-5/config_runner)
-
-[![Downloads](https://pepy.tech/badge/config_runner)](https://pepy.tech/project/config_runner)
+[![CircleCI](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master.svg?style=svg)](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master)
+[![codecov](https://codecov.io/gh/vfdev-5/py_config_runner/branch/master/graph/badge.svg)](https://codecov.io/gh/vfdev-5/py_config_runner)
+[![Downloads](https://pepy.tech/badge/py_config_runner)](https://pepy.tech/project/py_config_runner)
 
 Command line executable to run a script with python configuration file.
 
@@ -19,18 +17,19 @@ Command line executable to run a script with python configuration file.
 
 ```bash
 cd /path/to/my/project
-config_runner scripts/training.py configs/train/baseline.py
+py_config_runner scripts/training.py configs/train/baseline.py
 ```
 
 or
 
 ```bash
 cd /path/to/my/project
-python -u -m config_runner.__main__ scripts/training.py configs/train/baseline.py
+python -u -m py_config_runner.__main__ scripts/training.py configs/train/baseline.py
 ```
 
-The only condition on the script file is it should contain `run(config, **kwargs)` callable method. Argument kwargs 
-contains `logger` (e.g. `kwargs['logger']`) and `local_rank` (e.g. `kwargs['logger']`) for distributed computations.
+The only condition on the script file is it should contain `run(config, **kwargs)` callable method. Additionally, 
+argument kwargs contains `logger` (e.g. `kwargs['logger']`) and `local_rank` (e.g. `kwargs['logger']`) 
+for distributed computations.
 
 
 No restrictions are applied on the configuration file. It is user's responsibility to provide the script file that can 
@@ -39,8 +38,8 @@ the module named `config`.
 
 ### Example for Machine/Deep Learning
 
-For example, below configuration file defines a model, datasets, criterion, optimizer etc and 
-the training script runs the training:
+For example, below configuration file defines a model, datasets, criterion, optimizer etc and the training script runs the training:
+
 ```python
 # config.py
 from torch import nn
@@ -106,11 +105,10 @@ def run(config, logger=None, **kwargs):
                 running_acc = compute_running_accuracy(running_acc, y_pred, y)
                 
             logger.info("Validation: metrics={}".format(running_acc))
-
 ``` 
 
 ## Installation
 
 ```bash
-pip install config_runner
+pip install py_config_runner
 ```

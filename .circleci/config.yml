@@ -18,14 +18,28 @@ jobs:
       - run: pip install pytest-cov codecov
       - checkout
       - run: python setup.py install
-      - run: py.test --cov config_runner --cov-report term-missing -vvv
+      - run: py.test --cov py_config_runner --cov-report term-missing -vvv
       - run: codecov
+      - save_cache:
+          key: conda-py37
+          paths:
+            - /opt/conda
 
-#  docs:
-#    docker:
-#      - image: continuumio/miniconda3
-#    steps:
-#      - checkout
+  deploy:
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - restore_cache:
+          key: conda-py37
+      - checkout
+      - run: pip install twine
+      - run: python setup.py sdist bdist_wheel
+      - run:
+          command: |
+            echo -e "[pypi]" > ~/.pypirc
+            echo -e "username = $PYPI_USER" >> ~/.pypirc
+            echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
+      - run: twine upload dist/*
 
 
 workflows:
@@ -37,15 +51,10 @@ workflows:
           requires:
             - lint
 
-#      - docs:
-#        requires:
-#          - tests
-#
-#      - deploy:
-#        requires:
-#          - tests
-#          - docs
-#        filters:
-#          tags:
-#            only: /v.*/
+      - deploy:
+          requires:
+            - tests
+          filters:
+            tags:
+              only: /v.*/
 
