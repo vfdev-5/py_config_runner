@@ -17,7 +17,7 @@ From pip:
 
 .. code:: bash
 
-    pip install py_config_runner
+    pip install py-config-runner
 
 Basic usage
 ===========

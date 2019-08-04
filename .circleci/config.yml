@@ -37,8 +37,8 @@ jobs:
       - run:
           command: |
             echo -e "[pypi]" > ~/.pypirc
-            echo -e "username = $PYPI_USER" >> ~/.pypirc
-            echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
+            echo -e "username = @token" >> ~/.pypirc
+            echo -e "password = $PYPI_TOKEN" >> ~/.pypirc
       - run: twine upload dist/*
 
 
@@ -46,15 +46,22 @@ workflows:
   version: 2
   config_runner_ci:
     jobs:
-      - lint
+      - lint:
+          filters:
+            tags:
+              only: /v.*/
       - tests:
           requires:
             - lint
-
+          filters:
+            tags:
+              only: /v.*/
       - deploy:
           requires:
             - tests
           filters:
             tags:
               only: /v.*/
+            branches:
+              ignore: /.*/
 
