@@ -6,17 +6,17 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     steps:
-      - run: pip install flake8
       - checkout
+      - run: pip install flake8      
       - run: flake8
 
   tests:
     docker:
       - image: continuumio/miniconda3
     steps:
-      - run: conda install pytorch-cpu numpy -c pytorch
-      - run: pip install pytest-cov codecov
       - checkout
+      - run: conda install pytorch cpuonly numpy -c pytorch
+      - run: pip install pytest-cov codecov      
       - run: python setup.py install
       - run: py.test --cov py_config_runner --cov-report term-missing -vvv
       - run: codecov
@@ -37,7 +37,7 @@ jobs:
       - run:
           command: |
             echo -e "[pypi]" > ~/.pypirc
-            echo -e "username = @token" >> ~/.pypirc
+            echo -e "username = __token__" >> ~/.pypirc
             echo -e "password = $PYPI_TOKEN" >> ~/.pypirc
       - run: twine upload dist/*
 
