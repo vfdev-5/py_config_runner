@@ -29,7 +29,15 @@ Once installed, user can run its script with a configuration:
     cd /path/to/my/project
     py_config_runner scripts/training.py configs/train/baseline.py
 
-or if needed to run it as a module with `python` or other executable:
+or
+
+.. code:: bash
+
+    cd /path/to/my/project
+    python -u -m py_config_runner.__main__ scripts/training.py configs/train/baseline.py
+
+
+or if your specific launcher requires only python script files (e.g. `torch.distributed.launch`):
 
 .. code:: bash
 
@@ -45,3 +53,11 @@ for distributed computations.
 No restrictions are applied on the configuration file. It is user's responsibility to provide the script file that can
 consume given configuration file. Provided configuration file is loaded as python module and exposed into the script as
 the module named `config`.
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Additional Tools
+
+   config_utils
+   utils
