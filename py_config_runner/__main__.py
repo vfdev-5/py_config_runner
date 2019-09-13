@@ -1,7 +1,10 @@
 
 import click
 
-from py_config_runner.runner import run_script
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path
 
 
 @click.command()
@@ -20,6 +23,16 @@ def command(script_filepath, config_filepath, manual_config_load, local_rank):
         local_rank (int): local process rank for distributed computations.
             See https://pytorch.org/docs/stable/distributed.html#launch-utility
     """
+
+    # remove path to py_config_runner.py_config_runner module from sys.path
+    # as it can interfere with user's modules: py_config_runner.utils (seen as utils) <--> utils.py (user's module)
+    this_folder_path = Path(__file__).parent.as_posix()
+    import sys
+    if this_folder_path in sys.path:
+        sys.path.remove(this_folder_path)
+
+    from py_config_runner.runner import run_script
+
     run_script(script_filepath, config_filepath, manual_config_load=manual_config_load, local_rank=local_rank)
 
 

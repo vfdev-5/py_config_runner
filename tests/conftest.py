@@ -74,3 +74,24 @@ def run(config, logger=None, **kwargs):
 
     yield script_filepath
     shutil.rmtree(path.as_posix())
+
+
+@pytest.fixture
+def example_path():
+    cwd = Path(__file__).parent
+    p = cwd / "example"
+    yield p
+
+
+@pytest.fixture
+def example_baseline_config(example_path):
+    p = example_path / "configs" / "baseline.py"
+    assert p.exists()
+    yield p
+
+
+@pytest.fixture
+def example_scripts_training(example_path):
+    p = example_path / "scripts" / "training.py"
+    assert p.exists()
+    yield p
