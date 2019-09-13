@@ -35,7 +35,8 @@ def test_run_executable_as_script(example_path, example_scripts_training, exampl
     import os
     import sys
     current_env = os.environ.copy()
-    current_env['PYTHONPATH'] = "{}:{}".format(example_path.as_posix(), current_env['PYTHONPATH'])
+    current_env['PYTHONPATH'] = "{}:{}".format(example_path.as_posix(),
+                                               current_env['PYTHONPATH'] if 'PYTHONPATH' in current_env else "")
 
     from py_config_runner import __main__
 
