@@ -47,6 +47,7 @@ def run_script(script_filepath, config_filepath, **kwargs):
         logger.info("Catched KeyboardInterrupt -> exit")
     except Exception as e:  # noqa
         logger.exception("")
+        raise e
 
 
 class _ConfigObject:

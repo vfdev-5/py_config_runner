@@ -90,13 +90,17 @@ def run(config, **kwargs):
     with script_fp.open("w") as h:
         h.write(s)
 
-    run_script(script_fp, config_filepath)
+    with pytest.raises(RuntimeError):
+        run_script(script_fp, config_filepath)
 
 
 def test_run_script_manual_config_loading(capsys, dirname, config_filepath):  # noqa: F811
     script_fp = dirname / "manual_config_loading_script.py"
 
     s = """
+from pathlib import Path
+
+
 def run(config, **kwargs):
     config = config.setup()
 
@@ -145,3 +149,11 @@ def test__ConfigObject(config_filepath, script_filepath):
     assert getattr(config, 'b', None) == 2
     assert getattr(config, 'config_filepath', None) == Path(config_filepath)
     assert getattr(config, 'script_filepath', None) == Path(script_filepath)
+
+
+def test_example(example_baseline_config, example_scripts_training, example_path):
+
+    import sys
+    sys.path.insert(0, example_path.as_posix())
+    run_script(example_scripts_training, example_baseline_config)
+    run_script(example_scripts_training, example_baseline_config, manual_config_load=True)
