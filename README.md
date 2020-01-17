@@ -24,10 +24,10 @@ or
 
 ```bash
 cd /path/to/my/project
-python -u -m py_config_runner.__main__ scripts/training.py configs/train/baseline.py
+python -u -m py_config_runner scripts/training.py configs/train/baseline.py
 ```
 
-or if your specific launcher requires only python script files (e.g. `torch.distributed.launch`):
+or if your specific launcher requires only python script files:
  
 ```bash
 cd /path/to/my/project
