@@ -31,11 +31,8 @@ def run_script(script_filepath, config_filepath, **kwargs):
     exp_name = module.__name__
     run_fn = module.__dict__['run']
 
-    # Setup configuration
-    if kwargs.get('manual_config_load', False):
-        config = _ConfigObject(config_filepath, script_filepath)
-    else:
-        config = _setup_config(config_filepath, script_filepath)
+    # Lazy setup configuration
+    config = _ConfigObject(config_filepath, script_filepath)
 
     logger = logging.getLogger(exp_name)
     log_level = logging.INFO
@@ -53,11 +50,14 @@ def run_script(script_filepath, config_filepath, **kwargs):
 class _ConfigObject:
 
     def __init__(self, config_filepath, script_filepath):
-        self.config_filepath = config_filepath
-        self.script_filepath = script_filepath
+        self._config_filepath = config_filepath
+        self._script_filepath = script_filepath
+        self._config = None
 
-    def setup(self):
-        return _setup_config(self.config_filepath, self.script_filepath)
+    def __getattr__(self, item):
+        if self._config is None:
+            self._config = _setup_config(self._config_filepath, self._script_filepath)
+        return getattr(self._config, item)
 
 
 def _setup_config(config_filepath, script_filepath):
