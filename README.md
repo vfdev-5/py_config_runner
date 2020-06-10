@@ -10,7 +10,7 @@ Command line executable to run a script with python configuration file.
 
 - Configuration of any complexity
 - No need to serialize the configuration
-- No neeed other meta-languages for the configuration
+- No need other meta-languages for the configuration
 
 
 ## Usage

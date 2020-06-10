@@ -94,16 +94,14 @@ def run(config, **kwargs):
         run_script(script_fp, config_filepath)
 
 
-def test_run_script_manual_config_loading(capsys, dirname, config_filepath):  # noqa: F811
-    script_fp = dirname / "manual_config_loading_script.py"
+def test_run_script_lazy_loading(capsys, dirname, config_filepath):  # noqa: F811
+    script_fp = dirname / "lazy_loading_script.py"
 
     s = """
 from pathlib import Path
 
 
 def run(config, **kwargs):
-    config = config.setup()
-
     assert getattr(config, 'a', None) == 1
     assert getattr(config, 'b', None) == 2
     assert getattr(config, 'config_filepath', None) == Path("{}")
@@ -113,7 +111,7 @@ def run(config, **kwargs):
     with script_fp.open("w") as h:
         h.write(s)
 
-    run_script(script_fp, config_filepath, manual_config_load=True)
+    run_script(script_fp, config_filepath)
 
 
 def test_run_script_with_local_rank(capsys, dirname, config_filepath):  # noqa: F811
@@ -143,7 +141,6 @@ def test__setup_config(config_filepath, script_filepath):
 def test__ConfigObject(config_filepath, script_filepath):
 
     config = _ConfigObject(config_filepath, script_filepath)
-    config = config.setup()
 
     assert getattr(config, 'a', None) == 1
     assert getattr(config, 'b', None) == 2
