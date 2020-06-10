@@ -3,6 +3,8 @@
 [![CircleCI](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master.svg?style=svg)](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master)
 [![codecov](https://codecov.io/gh/vfdev-5/py_config_runner/branch/master/graph/badge.svg)](https://codecov.io/gh/vfdev-5/py_config_runner)
 [![Documentation Status](https://readthedocs.org/projects/py-config-runner/badge/?version=latest)](https://py-config-runner.readthedocs.io/en/latest/?badge=latest)
+[![image](https://img.shields.io/badge/dynamic/json.svg?label=PyPI&url=https%3A%2F%2Fpypi.org%2Fpypi%2Fpy_config_runner%2Fjson&query=%24.info.version&colorB=brightgreen&prefix=v)](https://pypi.org/project/py-config-runner/)
+
 
 Command line executable to run a script with python configuration file.
 
