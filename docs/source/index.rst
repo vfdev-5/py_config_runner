@@ -34,7 +34,7 @@ or
 .. code:: bash
 
     cd /path/to/my/project
-    python -u -m py_config_runner.__main__ scripts/training.py configs/train/baseline.py
+    python -u -m py_config_runner scripts/training.py configs/train/baseline.py
 
 
 or if your specific launcher requires only python script files (e.g. `torch.distributed.launch`):
@@ -42,7 +42,7 @@ or if your specific launcher requires only python script files (e.g. `torch.dist
 .. code:: bash
 
     cd /path/to/my/project
-    python -u -m py_config_runner.__main__ scripts/training.py configs/train/baseline.py
+    python -m special_launcher `py_config_runner_script` scripts/training.py configs/train/baseline.py
 
 
 The only condition on the script file is it should contain `run(config, **kwargs)` callable method. Additionally,
