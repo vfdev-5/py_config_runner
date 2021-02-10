@@ -6,7 +6,7 @@
 [![image](https://img.shields.io/badge/dynamic/json.svg?label=PyPI&url=https%3A%2F%2Fpypi.org%2Fpypi%2Fpy_config_runner%2Fjson&query=%24.info.version&colorB=brightgreen&prefix=v)](https://pypi.org/project/py-config-runner/)
 
 
-Command line executable to run a script with python configuration file.
+Python configuration file and command line executable to run a script with.
 
 **Why a python file as configuration?**
 
@@ -16,6 +16,48 @@ Command line executable to run a script with python configuration file.
 
 
 ## Usage
+
+### In the code
+
+Configuration file (e.g. `config.py`):
+```python
+num_epochs = 100
+batch_size = 256
+
+model = resnet18(10)
+train_loader = get_train_loader("/path/to/dataset", batch_size=batch_size)
+
+...
+```
+
+Script file (e.g. `training.py`):
+```python
+from py_config_runner import load_config, assert_config
+
+
+
+
+
+def training(config):
+    # ...
+    print(config.num_epochs)
+    print(config.model)
+    print(len(config.train_loader))
+
+
+def main():
+
+    config_filepath = "/path/to/config.py"
+    config = load_config(config_filepath)
+
+    assert_config(config, )
+
+    training(config)
+
+```
+
+
+### With launcher
 
 ```bash
 cd /path/to/my/project

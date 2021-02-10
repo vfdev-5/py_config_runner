@@ -1,4 +1,3 @@
-
 from collections.abc import Sequence, Iterable, Sized
 from numbers import Integral, Number
 
@@ -12,8 +11,10 @@ def assert_config(config, required_fields):
             For example, `(("a": (int, str)), ("b", str),)`
     """
     if not isinstance(required_fields, Sequence):
-        raise TypeError("Argument required_fields should be a Sequence of (str, type), "
-                        "but given {}".format(type(required_fields)))
+        raise TypeError(
+            "Argument required_fields should be a Sequence of (str, type), "
+            "but given {}".format(type(required_fields))
+        )
     for field in required_fields:
         if not (isinstance(field, Sequence) and len(field) == 2):
             raise ValueError("Entries of required_fields should be (str, type), but given {}".format(type(field)))
@@ -48,7 +49,7 @@ def get_params(config, required_fields):
         elif hasattr(obj, "__len__"):
             params[k] = len(obj)
             if hasattr(obj, "batch_size"):
-                params['{} batch size'.format(k)] = obj.batch_size
+                params["{} batch size".format(k)] = obj.batch_size
         elif hasattr(obj, "__class__"):
             params[k] = obj.__class__.__name__
 
@@ -67,8 +68,7 @@ class SizedIterable(Sized, Iterable):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is SizedIterable:
-            if any(m in B.__dict__ for B in C.__mro__
-                   for m in ("__len__", "__iter__")):
+            if any(m in B.__dict__ for B in C.__mro__ for m in ("__len__", "__iter__")):
                 return True
         return NotImplemented
 
@@ -78,10 +78,7 @@ try:
     import torch
     from torch.utils.data import DataLoader
 
-    TORCH_DL_BASE_CONFIG = BASE_CONFIG + (
-        ("device", str),
-        ("model", torch.nn.Module),
-    )
+    TORCH_DL_BASE_CONFIG = BASE_CONFIG + (("device", str), ("model", torch.nn.Module),)
 
     TRAIN_CONFIG = TORCH_DL_BASE_CONFIG + (
         ("train_loader", (DataLoader, SizedIterable)),
@@ -93,7 +90,7 @@ try:
     TRAINVAL_CONFIG = TRAIN_CONFIG + (
         ("train_eval_loader", (DataLoader, SizedIterable)),
         ("val_loader", (DataLoader, SizedIterable)),
-        ("lr_scheduler", object)
+        ("lr_scheduler", object),
     )
 
     INFERENCE_CONFIG = TORCH_DL_BASE_CONFIG + (
@@ -105,4 +102,5 @@ try:
 
 except ImportError:
     import warnings
+
     warnings.warn("As no torch module found, TRAIN_CONFIG, INFERENCE_CONFIG are not defined. Please install pytorch")

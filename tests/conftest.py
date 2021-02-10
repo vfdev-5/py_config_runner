@@ -1,8 +1,4 @@
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
-
+from pathlib import Path
 import tempfile
 import shutil
 
@@ -46,27 +42,6 @@ def run(config, **kwargs):
     print(config.b)
     print(config.config_filepath.as_posix())
     print(config.script_filepath.as_posix())
-        """
-
-    with script_filepath.open("w") as h:
-        h.write(data)
-
-    yield script_filepath
-    shutil.rmtree(path.as_posix())
-
-
-@pytest.fixture
-def logging_script_filepath():
-    path = Path(tempfile.mkdtemp())
-    script_filepath = path / "script.py"
-    data = """
-
-def run(config, logger=None, **kwargs):
-    assert logger is not None
-
-    logger.info("Start run script")
-    logger.info(config.a)
-    logger.info(config.b)
         """
 
     with script_filepath.open("w") as h:
