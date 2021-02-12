@@ -24,6 +24,7 @@ version = find_version("py_config_runner", "__init__.py")
 
 requirements = [
     "click",
+    "pydantic",
 ]
 
 

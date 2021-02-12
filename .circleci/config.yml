@@ -8,14 +8,14 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Install tools
-        command: |
-          pip install flake8 "black==19.10b0"
+          name: Install tools
+          command: |
+            pip install flake8 "black==19.10b0"
       - run:
-        name: Check code-formatting
-        command: |
-          flake8
-          black --check .
+          name: Check code-formatting
+          command: |
+            flake8
+            black --check .
 
   tests:
     docker:
@@ -23,16 +23,16 @@ jobs:
     steps:
       - checkout
       - run: 
-        name: Install dependencies and py_config_runner
-        command: |
-          conda install pytorch cpuonly numpy -c pytorch
-          pip install pytest-cov codecov      
-          python setup.py install
+          name: Install dependencies and py_config_runner
+          command: |
+            conda install pytorch cpuonly numpy -c pytorch
+            pip install pytest-cov codecov      
+            python setup.py install
 
       - run: 
-        name: Run tests
-        command: |
-          pytest --cov py_config_runner --cov-report term-missing -vvv
+          name: Run tests
+          command: |
+            pytest --cov py_config_runner --cov-report term-missing -vvv
 
       - run: codecov
       - save_cache:
@@ -48,9 +48,9 @@ jobs:
           key: conda-py37
       - checkout
       - run:
-        name: Install tools
-        command: |
-          pip install twine
+          name: Install tools
+          command: |
+            pip install twine
       - run: python setup.py sdist bdist_wheel
       - run:
           name: Upload to PyPI
@@ -62,7 +62,7 @@ jobs:
 
 workflows:
   version: 2
-  config_runner_ci:
+  py_config_runner_ci:
     jobs:
       - lint:
           filters:

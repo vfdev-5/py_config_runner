@@ -26,20 +26,26 @@ batch_size = 256
 
 model = resnet18(10)
 train_loader = get_train_loader("/path/to/dataset", batch_size=batch_size)
-
+unsup_dataloader = get_train_unsup_loader("/path/to/unsup_dataset", batch_size=batch_size)
 ...
 ```
 
 Script file (e.g. `training.py`):
 ```python
-from py_config_runner import load_config, assert_config
+from torch.utils.data import DataLoader
+from py_config_runner import ConfigObject, TrainvalConfigSchema
 
 
+class SSLTrainvalConfigSchema(TrainvalConfigSchema):
+
+    unsup_dataloader: DataLoader
 
 
 
 def training(config):
     # ...
+    print(config.config_filepath)
+    print(config.output_path)
     print(config.num_epochs)
     print(config.model)
     print(len(config.train_loader))
@@ -48,9 +54,12 @@ def training(config):
 def main():
 
     config_filepath = "/path/to/config.py"
-    config = load_config(config_filepath)
+    config = ConfigObject(config_filepath)
 
-    assert_config(config, )
+    SSLTrainvalConfigSchema.validate(config)
+
+    # Add more things at runtime    
+    config.output_path = "/tmp/output"
 
     training(config)
 

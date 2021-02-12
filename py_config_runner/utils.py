@@ -35,34 +35,32 @@ class ConfigObject(OrderedDict):
 
     def __init__(self, config_filepath: Union[str, Path], **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self._is_loaded = False
+        self.__dict__["_is_loaded"] = False
         self["config_filepath"] = config_filepath
 
     def __getitem__(self, item: Any) -> Any:
         self._load_if_not()
-        if item in self.__dict__:
-            return self.__dict__[item]
         return super().__getitem__(item)
 
     def __getattr__(self, item: Any) -> Any:
         self._load_if_not()
-        if item in self:
-            return self[item]
         return self[item]
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self._load_if_not()
+        self[name] = value
 
     def get(self, item: Any, default_value: Optional[Any] = None) -> Any:
         self._load_if_not()
-        if item in self.__dict__:
-            return self.__dict__[item]
         return super().get(item, default_value)
 
     def __contains__(self, item: Any) -> bool:
         self._load_if_not()
-        return super().__contains__(item) or item in self.__dict__
+        return super().__contains__(item)
 
     def _load_if_not(self) -> None:
         if self._is_loaded:
             return
         _config = load_module(super().__getitem__("config_filepath"))
-        self.update(_config.__dict__)
-        self._is_loaded = True
+        self.update({k: v for k, v in _config.__dict__.items() if not k.startswith("__")})
+        self.__dict__["_is_loaded"] = True

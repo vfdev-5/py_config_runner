@@ -24,6 +24,15 @@ def test_config_object(config_filepath):
     assert config["config_filepath"] == config_filepath
     assert config.get("config_filepath") == config_filepath
 
+    for k in config:
+        assert not k.startswith("__")
+
+    def foo(**kwargs):
+        for k in ["a", "b", "c", "d", "config_filepath"]:
+            assert k in kwargs
+
+    foo(**config)
+
 
 def test_load_module_inexisting_file():
 
