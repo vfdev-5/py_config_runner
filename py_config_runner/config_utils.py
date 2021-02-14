@@ -1,5 +1,6 @@
-from collections.abc import Iterable
-from typing import Any, Union, Optional
+from numbers import Number
+from collections.abc import Iterable, Sized
+from typing import Any, Union, Optional, Sequence, Type, Dict
 from pydantic import BaseModel
 
 try:
@@ -11,7 +12,7 @@ except ImportError:
     has_torch = False
 
 from py_config_runner.utils import ConfigObject
-from py_config_runner.deprecated import assert_config, get_params, BASE_CONFIG
+from py_config_runner.deprecated import assert_config, BASE_CONFIG, get_params as deprecated_get_params
 
 
 class Schema(BaseModel):
@@ -25,7 +26,6 @@ class Schema(BaseModel):
         import torch
         from torch.utils.data import DataLoader
         from py_config_runner import Schema
-        from py_config_runner.config_utils import SizedIterable
 
 
         class TrainingConfigSchema(Schema):
@@ -34,7 +34,7 @@ class Schema(BaseModel):
             debug: bool = False
             device: str = "cuda"
 
-            train_loader: Union[DataLoader, SizedIterable]
+            train_loader: Union[DataLoader, Iterable]
 
             num_epochs: int
             model: torch.nn.Module
@@ -82,3 +82,67 @@ if has_torch:
         data_loader: Union[DataLoader, Iterable]
         weights: str
         training_run_id: str
+
+
+def get_params(config: ConfigObject, required_fields: Union[Type[Schema], Sequence]) -> Dict:
+    """Method to convert configuration into a dictionary matching `required_fields`.
+
+    Args:
+        config: configuration object
+        required_fields (Type[Schema] or Sequence of (str, type)): Required attributes that should exist
+            in the configuration. Either can accept a Schema class or a sequence of pairs
+            ``(("a", (int, str)), ("b", str),)``.
+
+    Returns:
+        a dictionary
+
+    Example:
+
+    .. code-block:: python
+
+        from typing import *
+        import torch
+        from torch.utils.data import DataLoader
+        from py_config_runner import Schema
+
+
+        class TrainingConfigSchema(Schema):
+
+            seed: int
+            debug: bool = False
+            device: str = "cuda"
+
+            train_loader: Union[DataLoader, Iterable]
+
+            num_epochs: int
+            model: torch.nn.Module
+            optimizer: Any
+            criterion: torch.nn.Module
+
+        config = ConfigObject("/path/to/config.py")
+        # Get config required parameters
+        print(get_params(config, TrainingConfigSchema))
+        # >
+        # {"seed": 12, "debug": False, "device": "cuda", ...}
+
+    """
+
+    if isinstance(required_fields, Sequence):
+        return deprecated_get_params(config, required_fields)
+
+    if not (isinstance(required_fields, type) and issubclass(required_fields, Schema)):
+        raise ValueError("Argument required_fields should be a class (not instance) derived from Schema")
+
+    result = required_fields.validate(config)
+    params = {}
+    for k, v in result.dict().items():
+        if isinstance(v, (Number, str, bool)):
+            params[k] = v
+        elif hasattr(v, "__len__"):
+            params[k] = len(v)  # type: ignore[assignment]
+            if hasattr(v, "batch_size"):
+                params["{} batch size".format(k)] = v.batch_size
+        elif hasattr(v, "__class__"):
+            params[k] = v.__class__.__name__
+
+    return params

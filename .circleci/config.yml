@@ -22,17 +22,23 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
-      - run: 
+      - run:
           name: Install dependencies and py_config_runner
           command: |
             conda install pytorch cpuonly numpy -c pytorch
-            pip install pytest-cov codecov      
+            pip install pytest-cov codecov mypy
             python setup.py install
 
-      - run: 
+      - run:
           name: Run tests
           command: |
+            mypy --config=mypy.ini
             pytest --cov py_config_runner --cov-report term-missing -vvv
+
+      - run:
+          name: Run example
+          command: |
+            date
 
       - run: codecov
       - save_cache:

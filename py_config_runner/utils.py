@@ -25,7 +25,7 @@ def load_module(filepath: Union[str, Path]) -> Any:
 
     spec = importlib.util.spec_from_file_location(filepath.stem, filepath)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
     return module
 
 
@@ -64,3 +64,12 @@ class ConfigObject(OrderedDict):
         _config = load_module(super().__getitem__("config_filepath"))
         self.update({k: v for k, v in _config.__dict__.items() if not k.startswith("__")})
         self.__dict__["_is_loaded"] = True
+
+    def __repr__(self):
+        self._load_if_not()
+        output = [
+            "Configuration:",
+        ]
+        for k, v in self.items():
+            output.append(f"\t{k}: {v}")
+        return "\n".join(output)

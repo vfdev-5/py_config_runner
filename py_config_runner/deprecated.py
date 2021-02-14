@@ -105,7 +105,7 @@ def get_params(config, required_fields):
     Args:
         config: configuration object
         required_fields (Sequence of (str, type)): Required attributes that should exist in the configuration.
-            For example, `(("a": (int, str)), ("b", str),)`
+            For example, `(("a", (int, str)), ("b", str),)`
 
     Returns:
         a dictionary

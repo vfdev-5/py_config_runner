@@ -1,5 +1,7 @@
 # Created by https://www.gitignore.io/api/python, and modified...
 
+examples/MNIST
+
 ## Linux backup files
 *~
 

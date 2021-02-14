@@ -19,7 +19,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = "py-config-runner"
-copyright = "2019, vfdev-5"
+copyright = "2019-present, vfdev-5"
 author = "vfdev-5"
 
 # The short X.Y version
