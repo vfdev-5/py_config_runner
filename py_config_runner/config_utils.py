@@ -75,6 +75,8 @@ if has_torch:
         """Base configuration schema with a PyTorch model. Derived from
         :class:`py_config_runner.config_utils.BaseConfigSchema`.
 
+        This schema is available only if torch is installed.
+
         Schema defines required parameters:
             - device (str), default "cuda"
             - model (torch.nn.Module)
@@ -87,6 +89,8 @@ if has_torch:
     class TrainConfigSchema(TorchModelConfigSchema):
         """Training configuration schema with a PyTorch model. Derived from
         :class:`py_config_runner.config_utils.TorchModelConfigSchema`.
+
+        This schema is available only if torch is installed.
 
         Schema defines required parameters:
             - train_loader (torch DataLoader or Iterable)
@@ -104,6 +108,8 @@ if has_torch:
         """Training/Validation configuration schema with a PyTorch model. Derived from
         :class:`py_config_runner.config_utils.TrainConfigSchema`.
 
+        This schema is available only if torch is installed.
+
         Schema defines required parameters:
             - train_eval_loader (torch DataLoader or Iterable)
             - val_loader (torch DataLoader or Iterable)
@@ -117,6 +123,8 @@ if has_torch:
     class InferenceConfigSchema(TorchModelConfigSchema):
         """Inference configuration schema with a PyTorch model. Derived from
         :class:`py_config_runner.config_utils.TorchModelConfigSchema`.
+
+        This schema is available only if torch is installed.
 
         Schema defines required parameters:
             - data_loader (torch DataLoader or Iterable)

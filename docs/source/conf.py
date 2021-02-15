@@ -12,10 +12,23 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+# mock torch dependency
+import sys
+from unittest.mock import MagicMock
+
+mock_torch = MagicMock(name="torch")
+class Module: pass
+mock_torch.nn.Module = Module
+sys.modules["torch"] = mock_torch
+
+mock_torch_utils_data = MagicMock(name="torch.utils")
+sys.modules["torch.utils.data"] = mock_torch_utils_data
+class DataLoader: pass
+mock_torch_utils_data.DataLoader = DataLoader
+
+
 import py_config_runner
 import sphinx_rtd_theme
-
-
 # -- Project information -----------------------------------------------------
 
 project = "py-config-runner"
