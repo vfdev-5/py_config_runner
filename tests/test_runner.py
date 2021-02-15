@@ -4,8 +4,8 @@ from py_config_runner.runner import run_script, _check_script
 import pytest
 
 
-def test_run_script_script_file_no_run(dirname):  # noqa: F811
-    script_fp = dirname / "script.py"
+def test_run_script_script_file_no_run(dirname, config_filepath):  # noqa: F811
+    script_fp = dirname / "script_no_run.py"
 
     s = """
 import numpy as np
@@ -19,11 +19,11 @@ b = np.array([1, 2, 3])
         h.write(s)
 
     with pytest.raises(RuntimeError, match="should contain a method run"):
-        run_script(script_fp, "")
+        run_script(script_fp, config_filepath)
 
 
-def test_run_script_script_file_run_not_callable(dirname):  # noqa: F811
-    script_fp = dirname / "script.py"
+def test_run_script_script_file_run_not_callable(dirname, config_filepath):  # noqa: F811
+    script_fp = dirname / "script_run_not_callable.py"
 
     s = """
 run = 0
@@ -33,11 +33,11 @@ run = 0
         h.write(s)
 
     with pytest.raises(RuntimeError, match="should be a callable function"):
-        run_script(script_fp, "")
+        run_script(script_fp, config_filepath)
 
 
 def test_run_script_script_file_run_wrong_signature(dirname):  # noqa: F811
-    script_fp = dirname / "script.py"
+    script_fp = dirname / "script_wrong_signature.py"
 
     s = """
 def run():

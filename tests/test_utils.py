@@ -68,14 +68,6 @@ def test_config_object_repr(config_filepath):
     assert "_data" in out
 
 
-def test_load_module_inexisting_file():
-
-    filepath = "/tmp/tmp.py"
-
-    with pytest.raises(ValueError, match="is not found"):
-        load_module(filepath)
-
-
 def test_load_module(dirname):
     import numpy as np
 
@@ -97,3 +89,11 @@ b = np.array([1, 2, 3])
 
     assert "b" in custom_module.__dict__
     assert np.all(custom_module.b == np.array([1, 2, 3]))
+
+
+def test_load_module_wrong_args():
+    with pytest.raises(ValueError, match=r"is not found"):
+        load_module("/tmp/abcdef")
+
+    with pytest.raises(ValueError, match=r"should be a file"):
+        load_module("/tmp/")
