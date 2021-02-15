@@ -1,8 +1,9 @@
 import importlib.util
+import sys
 
-from collections import OrderedDict
+from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Iterator, Optional, Union
 
 from py_config_runner.deprecated import (
     LOGGING_FORMATTER,
@@ -23,46 +24,71 @@ def load_module(filepath: Union[str, Path]) -> Any:
     if not filepath.exists():
         raise ValueError(f"File '{filepath.as_posix()}' is not found")
 
-    spec = importlib.util.spec_from_file_location(filepath.stem, filepath)
+    module_name = filepath.stem
+    if module_name in sys.modules:
+        module_name += "__py_config_runner"
+    spec = importlib.util.spec_from_file_location(module_name, filepath)
     module = importlib.util.module_from_spec(spec)
+    # required by pydantic to work: https://github.com/samuelcolvin/pydantic/issues/2363
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)  # type: ignore[union-attr]
     return module
 
 
-class ConfigObject(OrderedDict):
+class ConfigObject(MutableMapping):
     """Lazy config object
     """
 
     def __init__(self, config_filepath: Union[str, Path], **kwargs: Any) -> None:
-        super().__init__(**kwargs)
+        super().__init__()
         self.__dict__["_is_loaded"] = False
-        self["config_filepath"] = config_filepath
-
-    def __getitem__(self, item: Any) -> Any:
-        self._load_if_not()
-        return super().__getitem__(item)
+        self.__dict__["__internal_config_object_data_dict__"] = {"config_filepath": config_filepath}
+        self.__dict__["__internal_config_object_data_dict__"].update(kwargs)
 
     def __getattr__(self, item: Any) -> Any:
         self._load_if_not()
-        return self[item]
+        return self.__internal_config_object_data_dict__[item]
 
     def __setattr__(self, name: str, value: Any) -> None:
         self._load_if_not()
-        self[name] = value
+        self.__internal_config_object_data_dict__[name] = value
+
+    def __len__(self) -> int:
+        self._load_if_not()
+        return len(self.__internal_config_object_data_dict__)
+
+    def __getitem__(self, item: Any) -> Any:
+        self._load_if_not()
+        return self.__internal_config_object_data_dict__[item]
+
+    def __setitem__(self, name: Any, value: Any) -> None:
+        self._load_if_not()
+        self.__internal_config_object_data_dict__[name] = value
+
+    def __delitem__(self, key) -> None:
+        self._load_if_not()
+        del self.__internal_config_object_data_dict__[key]
+
+    def __iter__(self) -> Iterator:
+        self._load_if_not()
+        return iter(self.__internal_config_object_data_dict__)
 
     def get(self, item: Any, default_value: Optional[Any] = None) -> Any:
         self._load_if_not()
-        return super().get(item, default_value)
+        return self.__internal_config_object_data_dict__.get(item, default_value)
 
     def __contains__(self, item: Any) -> bool:
         self._load_if_not()
-        return super().__contains__(item)
+        return item in self.__internal_config_object_data_dict__
 
     def _load_if_not(self) -> None:
-        if self._is_loaded:
+        if self.__dict__["_is_loaded"]:
             return
-        _config = load_module(super().__getitem__("config_filepath"))
-        self.update({k: v for k, v in _config.__dict__.items() if not k.startswith("__")})
+        cfpath = self.__internal_config_object_data_dict__["config_filepath"]
+        _config = load_module(cfpath)
+        self.__internal_config_object_data_dict__.update(
+            {k: v for k, v in _config.__dict__.items() if not k.startswith("__")}
+        )
         self.__dict__["_is_loaded"] = True
 
     def __repr__(self):

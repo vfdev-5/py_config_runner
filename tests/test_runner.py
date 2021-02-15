@@ -73,7 +73,7 @@ def run(config, **kwargs):
     with script_fp.open("w") as h:
         h.write(s)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=r"STOP"):
         run_script(script_fp, config_filepath)
 
 
@@ -119,4 +119,28 @@ def test_example(example_baseline_config, example_scripts_training, example_path
 
     sys.path.insert(0, example_path.as_posix())
     run_script(example_scripts_training, example_baseline_config)
-    run_script(example_scripts_training, example_baseline_config, manual_config_load=True)
+
+
+def test_run_script_with_schema(dirname, config_filepath):  # noqa: F811
+    script_fp = dirname / "script_with_schema.py"
+
+    s = """
+from py_config_runner import Schema
+
+
+class MyConfigSchema(Schema):
+    # Define required parameters for a training config
+    # Type hints are from typing
+    a: int
+    data: int
+
+
+def run(config, **kwargs):
+
+    MyConfigSchema.validate(config)
+    """
+
+    with script_fp.open("w") as h:
+        h.write(s)
+
+    run_script(script_fp, config_filepath)

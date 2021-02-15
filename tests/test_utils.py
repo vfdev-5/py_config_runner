@@ -9,15 +9,16 @@ def test_config_object(config_filepath):
 
     config = ConfigObject(config_filepath)
     assert "a" in config
-    assert config["a"] == config.a == config.get("a")
+    assert config["a"] == config.a == config.get("a") == 1
     assert "b" in config
-    assert config["b"] == config.b == config.get("b")
+    assert config["b"] == config.b == config.get("b") == 2
 
     config.c = 3
     config["d"] = 4
 
     assert "c" in config
-    assert config["c"] == config.c == config.get("c")
+    assert config["c"] == config.c == config.get("c") == 3
+    assert config["d"] == config.d == config.get("d") == 4
     assert "config_filepath" in config
     assert isinstance(config.config_filepath, Path)
     assert config.config_filepath == config_filepath
@@ -32,6 +33,39 @@ def test_config_object(config_filepath):
             assert k in kwargs
 
     foo(**config)
+
+
+def test_config_object_length(config_filepath):
+    config = ConfigObject(config_filepath)
+
+    assert len(config) == 4 + 1  # config + config_filepath
+
+
+def test_config_object_items(config_filepath):
+    config = ConfigObject(config_filepath)
+
+    res = [(k, v) for k, v in config.items()]
+    assert len(res) == 4 + 1  # config + config_filepath
+
+
+def test_config_object_loading(config_filepath):
+    config = ConfigObject(config_filepath)
+
+    def foo(**kwargs):
+        for k in ["a", "b", "config_filepath"]:
+            assert k in kwargs
+
+    foo(**config)
+
+
+def test_config_object_repr(config_filepath):
+    config = ConfigObject(config_filepath)
+
+    out = repr(config)
+    assert "a" in out
+    assert "b" in out
+    assert "data" in out
+    assert "_data" in out
 
 
 def test_load_module_inexisting_file():

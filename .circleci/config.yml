@@ -25,7 +25,7 @@ jobs:
       - run:
           name: Install dependencies and py_config_runner
           command: |
-            conda install pytorch cpuonly numpy -c pytorch
+            conda install pytorch torchvision cpuonly numpy -c pytorch
             pip install pytest-cov codecov mypy
             python setup.py install
 
@@ -36,10 +36,19 @@ jobs:
             pytest --cov py_config_runner --cov-report term-missing -vvv
 
       - run:
-          name: Run example
+          name: Run example (basic)
           command: |
-            date
+            cd examples/basic
+            python -u main.py --config=configs/baseline_train.py
+            py_config_runner training.py configs/baseline_train.py
 
+      - run:
+          name: Run example (pytorch)
+          command: |            
+            cd examples/pytorch
+            python -u main.py --config=configs/baseline_train_pytorch.py
+            py_config_runner training.py configs/baseline_train_pytorch.py
+    
       - run: codecov
       - save_cache:
           key: conda-py37

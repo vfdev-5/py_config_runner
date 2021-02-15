@@ -19,6 +19,8 @@ def config_filepath():
     data = """
 a = 1
 b = 2
+_data = 3
+data = 4
         """
 
     with config_filepath.open("w") as h:
