@@ -7,18 +7,41 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
-      - run: pip install flake8      
-      - run: flake8
+      - run:
+          name: Install tools
+          command: |
+            pip install flake8 "black==19.10b0"
+      - run:
+          name: Check code-formatting
+          command: |
+            flake8
+            black --check .
 
   tests:
     docker:
       - image: continuumio/miniconda3
     steps:
       - checkout
-      - run: conda install pytorch cpuonly numpy -c pytorch
-      - run: pip install pytest-cov codecov      
-      - run: python setup.py install
-      - run: py.test --cov py_config_runner --cov-report term-missing -vvv
+      - run:
+          name: Install dependencies and py_config_runner
+          command: |
+            conda install pytorch torchvision cpuonly numpy -c pytorch
+            pip install pytest-cov codecov mypy
+            python setup.py install
+
+      - run:
+          name: Run tests
+          command: |
+            mypy --config=mypy.ini
+            pytest --cov py_config_runner --cov-report term-missing -vvv
+
+      - run:
+          name: Run example (basic)
+          command: |
+            cd examples/basic
+            python -u main.py --config=configs/baseline_train.py
+            py_config_runner training.py configs/baseline_train.py
+    
       - run: codecov
       - save_cache:
           key: conda-py37
@@ -32,19 +55,22 @@ jobs:
       - restore_cache:
           key: conda-py37
       - checkout
-      - run: pip install twine
+      - run:
+          name: Install tools
+          command: |
+            pip install twine
       - run: python setup.py sdist bdist_wheel
       - run:
+          name: Upload to PyPI
           command: |
             echo -e "[pypi]" > ~/.pypirc
             echo -e "username = __token__" >> ~/.pypirc
             echo -e "password = $PYPI_TOKEN" >> ~/.pypirc
-      - run: twine upload dist/*
-
+            twine upload dist/*
 
 workflows:
   version: 2
-  config_runner_ci:
+  py_config_runner_ci:
     jobs:
       - lint:
           filters:

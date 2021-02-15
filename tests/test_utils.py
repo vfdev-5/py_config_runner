@@ -1,77 +1,71 @@
 import os
-import tempfile
-import logging
-import shutil
-
-from py_config_runner.utils import setup_logger, set_seed, load_module, add_logger_filehandler
-
 import pytest
+from pathlib import Path
+
+from py_config_runner import ConfigObject, load_module
 
 
-@pytest.fixture
-def dirname():
-    path = tempfile.mkdtemp()
-    yield path
-    shutil.rmtree(path)
+def test_config_object(config_filepath):
+
+    config = ConfigObject(config_filepath)
+    assert "a" in config
+    assert config["a"] == config.a == config.get("a") == 1
+    assert "b" in config
+    assert config["b"] == config.b == config.get("b") == 2
+
+    config.c = 3
+    config["d"] = 4
+
+    assert "c" in config
+    assert config["c"] == config.c == config.get("c") == 3
+    assert config["d"] == config.d == config.get("d") == 4
+    assert "config_filepath" in config
+    assert isinstance(config.config_filepath, Path)
+    assert config.config_filepath == config_filepath
+    assert config["config_filepath"] == config_filepath
+    assert config.get("config_filepath") == config_filepath
+
+    for k in config:
+        assert not k.startswith("__")
+
+    def foo(**kwargs):
+        for k in ["a", "b", "c", "d", "config_filepath"]:
+            assert k in kwargs
+
+    foo(**config)
 
 
-def test_setup_logger(capsys):
+def test_config_object_length(config_filepath):
+    config = ConfigObject(config_filepath)
 
-    logger = logging.getLogger("test")
-    log_level = logging.INFO
-    setup_logger(logger, log_level)
-
-    msg = "This is test message {}".format(123)
-    logger.info(msg)
-
-    captured = capsys.readouterr()
-    err = captured.err.split('\r')
-    err = list(map(lambda x: x.strip(), err))
-    err = list(filter(None, err))
-    assert "|test|INFO| " + msg in err[-1]
+    assert len(config) == 4 + 1  # config + config_filepath
 
 
-def test_set_seed():
+def test_config_object_items(config_filepath):
+    config = ConfigObject(config_filepath)
 
-    # check numpy tensor
-    import numpy as np
-    np.random.seed(0)
-    a1 = np.random.rand(4, 10)
-    a2 = np.random.rand(4, 10)
+    res = [(k, v) for k, v in config.items()]
+    assert len(res) == 4 + 1  # config + config_filepath
 
-    set_seed(0)
-    b1 = np.random.rand(4, 10)
-    b2 = np.random.rand(4, 10)
 
-    assert np.all(a1 == b1)
-    assert np.all(a2 == b2)
+def test_config_object_loading(config_filepath):
+    config = ConfigObject(config_filepath)
 
-    # check random
-    import random
-    random.seed(0)
-    a1 = random.randint(0, 100)
-    a2 = random.randint(0, 100)
+    def foo(**kwargs):
+        for k in ["a", "b", "config_filepath"]:
+            assert k in kwargs
 
-    set_seed(0)
-    b1 = random.randint(0, 100)
-    b2 = random.randint(0, 100)
+    foo(**config)
 
-    assert a1 == b1
-    assert a2 == b2
 
-    # check torch tensors
-    import torch
+def test_config_object_repr(config_filepath):
+    config = ConfigObject(config_filepath)
 
-    torch.manual_seed(0)
-    a1 = torch.randint(0, 100, size=(10, ))
-    a2 = torch.randint(0, 100, size=(10, ))
-
-    set_seed(0)
-    b1 = torch.randint(0, 100, size=(10, ))
-    b2 = torch.randint(0, 100, size=(10, ))
-
-    assert torch.all(a1 == b1)
-    assert torch.all(a2 == b2)
+    out = repr(config)
+    assert "a" in out
+    assert "b" in out
+    assert "data" in out
+    assert "_data" in out
 
 
 def test_load_module_inexisting_file():
@@ -89,10 +83,8 @@ def test_load_module(dirname):
 
     s = """
 import numpy as np
-
 a = 123
 b = np.array([1, 2, 3])
-
     """
 
     with open(filepath, "w") as h:
@@ -105,27 +97,3 @@ b = np.array([1, 2, 3])
 
     assert "b" in custom_module.__dict__
     assert np.all(custom_module.b == np.array([1, 2, 3]))
-
-
-def test_add_logger_filehandler(dirname):
-    logger = logging.getLogger("test")
-    log_level = logging.DEBUG
-    setup_logger(logger, log_level)
-
-    filepath = os.path.join(dirname, "test.log")
-    add_logger_filehandler(logger, filepath)
-
-    msg1 = "This is a warning message {}".format(123)
-    msg2 = "This is an info message {}".format(123)
-    msg3 = "This is a debug message {}".format(123)
-    logger.warning(msg1)
-    logger.info(msg2)
-    logger.debug(msg3)
-
-    with open(filepath, 'r') as h:
-        data = h.readlines()
-
-    assert len(data) == 3
-    assert "|test|WARNING| " + msg1 in data[0]
-    assert "|test|INFO| " + msg2 in data[1]
-    assert "|test|DEBUG| " + msg3 in data[2]

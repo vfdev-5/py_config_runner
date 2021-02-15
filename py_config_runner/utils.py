@@ -1,80 +1,118 @@
-import logging
+import importlib.util
+import sys
+
+from collections.abc import MutableMapping
+from pathlib import Path
+from typing import Any, Callable, Iterator, Optional, Union
+
+from py_config_runner.deprecated import (
+    LOGGING_FORMATTER,
+    setup_logger,
+    add_logger_filehandler,
+    set_seed,
+)
 
 
-LOGGING_FORMATTER = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s| %(message)s")
-
-
-def setup_logger(logger, level=logging.INFO):
-    """Resets formatting and stdout stream handler to the logger
-
-    Args:
-        logger: logger from `logging` module
-        level: logging verbosity level
-
-    """
-
-    if logger.hasHandlers():
-        for h in list(logger.handlers):
-            logger.removeHandler(h)
-
-    logger.setLevel(level)
-
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(LOGGING_FORMATTER)
-    logger.addHandler(ch)
-
-
-def add_logger_filehandler(logger, filepath):
-    """Adds additional file handler to the logger
-
-    Args:
-        logger: logger from `logging` module
-        filepath: output logging file
-
-    """
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler(filepath)
-    fh.setLevel(logger.level)
-    fh.setFormatter(LOGGING_FORMATTER)
-    logger.addHandler(fh)
-
-
-def set_seed(seed):
-    """Setup seed for numpy, random, torch
-
-    Args:
-        seed (int): any integer random seed
-
-    """
-    import random
-    import numpy as np
-    import torch
-
-    random.seed(seed)
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-
-
-def load_module(filepath):
+def load_module(filepath: Union[str, Path]) -> Any:
     """Method to load module from file path
 
     Args:
-        filepath: path to module to load
+        filepath (str or Path): path to module to load
 
     """
-    import importlib.util
+    filepath = Path(filepath)
+    if not filepath.exists():
+        raise ValueError(f"File '{filepath.as_posix()}' is not found")
 
-    try:
-        from pathlib import Path
-    except ImportError:
-        from pathlib2 import Path
-
-    if not Path(filepath).exists():
-        raise ValueError("File '{}' is not found".format(filepath))
-
-    spec = importlib.util.spec_from_file_location(Path(filepath).stem, filepath)
+    module_name = filepath.stem
+    if module_name in sys.modules:
+        module_name += "__py_config_runner"
+    spec = importlib.util.spec_from_file_location(module_name, filepath)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    # required by pydantic to work: https://github.com/samuelcolvin/pydantic/issues/2363
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
     return module
+
+
+class ConfigObject(MutableMapping):
+    """Lazy config object
+
+    Args:
+        filepath (str or Path): path to python configuration file
+
+    Returns:
+        ConfigObject
+
+    Example:
+
+    .. code-block:: python
+
+        config = ConfigObject("/path/to/baseline.py")
+        print(config)
+        # For example, configuration file contains params: seed, ...
+
+        print(config.seed, config["seed"], config.get("seed"))
+
+    """
+
+    def __init__(self, config_filepath: Union[str, Path], **kwargs: Any) -> None:
+        super().__init__()
+        self.__dict__["_is_loaded"] = False
+        self.__dict__["__internal_config_object_data_dict__"] = {"config_filepath": config_filepath}
+        self.__dict__["__internal_config_object_data_dict__"].update(kwargs)
+
+    def __getattr__(self, item: Any) -> Any:
+        self._load_if_not()
+        return self.__internal_config_object_data_dict__[item]
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self._load_if_not()
+        self.__internal_config_object_data_dict__[name] = value
+
+    def __len__(self) -> int:
+        self._load_if_not()
+        return len(self.__internal_config_object_data_dict__)
+
+    def __getitem__(self, item: Any) -> Any:
+        self._load_if_not()
+        return self.__internal_config_object_data_dict__[item]
+
+    def __setitem__(self, name: Any, value: Any) -> None:
+        self._load_if_not()
+        self.__internal_config_object_data_dict__[name] = value
+
+    def __delitem__(self, key) -> None:
+        self._load_if_not()
+        del self.__internal_config_object_data_dict__[key]
+
+    def __iter__(self) -> Iterator:
+        self._load_if_not()
+        return iter(self.__internal_config_object_data_dict__)
+
+    def get(self, item: Any, default_value: Optional[Any] = None) -> Any:
+        self._load_if_not()
+        return self.__internal_config_object_data_dict__.get(item, default_value)
+
+    def __contains__(self, item: Any) -> bool:
+        self._load_if_not()
+        return item in self.__internal_config_object_data_dict__
+
+    def _load_if_not(self) -> None:
+        if self.__dict__["_is_loaded"]:
+            return
+        cfpath = self.__internal_config_object_data_dict__["config_filepath"]
+        _config = load_module(cfpath)
+        self.__internal_config_object_data_dict__.update(
+            {k: v for k, v in _config.__dict__.items() if not k.startswith("__")}
+        )
+        self.__dict__["_is_loaded"] = True
+
+    def __repr__(self):
+        self._load_if_not()
+        output = [
+            "Configuration:",
+        ]
+        for k, v in self.items():
+            output.append(f"\t{k}: {v}")
+        return "\n".join(output)

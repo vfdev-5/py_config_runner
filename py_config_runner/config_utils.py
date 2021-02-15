@@ -1,108 +1,191 @@
+from numbers import Number
+from collections.abc import Iterable, Sized
+from typing import Any, Union, Optional, Sequence, Type, Dict
+from pydantic import BaseModel
 
-from collections.abc import Sequence, Iterable, Sized
-from numbers import Integral, Number
+try:
+    import torch
+    from torch.utils.data import DataLoader
+
+    has_torch = True
+except ImportError:
+    has_torch = False
+
+from py_config_runner.utils import ConfigObject
+from py_config_runner.deprecated import assert_config, BASE_CONFIG, get_params as deprecated_get_params
 
 
-def assert_config(config, required_fields):
-    """Method to check the config if it has required fields of specified type
+class Schema(BaseModel):
+    """Base class for all custom configuration schemas
 
-    Args:
-        config: Configuration object to check
-        required_fields (Sequence of (str, type)): Required attributes that should exist in the configuration.
-            For example, `(("a": (int, str)), ("b", str),)`
+    Example:
+
+    .. code-block:: python
+
+        from typing import *
+        import torch
+        from torch.utils.data import DataLoader
+        from py_config_runner import Schema
+
+
+        class TrainingConfigSchema(Schema):
+
+            seed: int
+            debug: bool = False
+            device: str = "cuda"
+
+            train_loader: Union[DataLoader, Iterable]
+
+            num_epochs: int
+            model: torch.nn.Module
+            optimizer: Any
+            criterion: torch.nn.Module
+
+        config = ConfigObject("/path/to/config.py")
+        # Check the config
+        TrainingConfigSchema.validate(config)
     """
-    if not isinstance(required_fields, Sequence):
-        raise TypeError("Argument required_fields should be a Sequence of (str, type), "
-                        "but given {}".format(type(required_fields)))
-    for field in required_fields:
-        if not (isinstance(field, Sequence) and len(field) == 2):
-            raise ValueError("Entries of required_fields should be (str, type), but given {}".format(type(field)))
-        k, t = field
-        obj = getattr(config, k, None)
-        if obj is None:
-            raise ValueError("Config should have attribute: {} of type {}".format(k, t))
-        if t is not None:
-            if not isinstance(obj, t):
-                raise TypeError("config.{} should be of type {}, but given {}".format(k, t, type(obj)))
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @classmethod
+    def validate(cls, config):
+        return cls(**config)
 
 
-def get_params(config, required_fields):
+class BaseConfigSchema(Schema):
+    """Base configuration schema.
+
+    Schema defines required parameters:
+        - seed (int)
+        - debug (bool), default False
+
+    """
+
+    seed: int
+    debug: bool = False
+
+
+if has_torch:
+
+    from py_config_runner.deprecated import TORCH_DL_BASE_CONFIG, TRAIN_CONFIG, TRAINVAL_CONFIG, INFERENCE_CONFIG
+
+    class TorchModelConfigSchema(BaseConfigSchema):
+        """Base configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.BaseConfigSchema`.
+
+        Schema defines required parameters:
+            - device (str), default "cuda"
+            - model (torch.nn.Module)
+
+        """
+
+        device: str = "cuda"
+        model: torch.nn.Module
+
+    class TrainConfigSchema(TorchModelConfigSchema):
+        """Training configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.TorchModelConfigSchema`.
+
+        Schema defines required parameters:
+            - train_loader (torch DataLoader or Iterable)
+            - num_epochs (int)
+            - criterion (torch.nn.Module)
+            - optimizer (Any)
+        """
+
+        train_loader: Union[DataLoader, Iterable]
+        num_epochs: int
+        criterion: torch.nn.Module
+        optimizer: Any
+
+    class TrainvalConfigSchema(TrainConfigSchema):
+        """Training/Validation configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.TrainConfigSchema`.
+
+        Schema defines required parameters:
+            - train_eval_loader (torch DataLoader or Iterable)
+            - val_loader (torch DataLoader or Iterable)
+            - lr_scheduler (Any)
+        """
+
+        train_eval_loader: Optional[Union[DataLoader, Iterable]]
+        val_loader: Union[DataLoader, Iterable]
+        lr_scheduler: Any
+
+    class InferenceConfigSchema(TorchModelConfigSchema):
+        """Inference configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.TorchModelConfigSchema`.
+
+        Schema defines required parameters:
+            - data_loader (torch DataLoader or Iterable)
+            - weights_path (str)
+        """
+
+        data_loader: Union[DataLoader, Iterable]
+        weights_path: str
+
+
+def get_params(config: ConfigObject, required_fields: Union[Type[Schema], Sequence]) -> Dict:
     """Method to convert configuration into a dictionary matching `required_fields`.
 
     Args:
         config: configuration object
-        required_fields (Sequence of (str, type)): Required attributes that should exist in the configuration.
-            For example, `(("a": (int, str)), ("b", str),)`
+        required_fields (Type[Schema] or Sequence of (str, type)): Required attributes that should exist
+            in the configuration. Either can accept a Schema class or a sequence of pairs
+            ``(("a", (int, str)), ("b", str),)``.
 
     Returns:
         a dictionary
 
+    Example:
+
+    .. code-block:: python
+
+        from typing import *
+        import torch
+        from torch.utils.data import DataLoader
+        from py_config_runner import Schema
+
+
+        class TrainingConfigSchema(Schema):
+
+            seed: int
+            debug: bool = False
+            device: str = "cuda"
+
+            train_loader: Union[DataLoader, Iterable]
+
+            num_epochs: int
+            model: torch.nn.Module
+            optimizer: Any
+            criterion: torch.nn.Module
+
+        config = ConfigObject("/path/to/config.py")
+        # Get config required parameters
+        print(get_params(config, TrainingConfigSchema))
+        # >
+        # {"seed": 12, "debug": False, "device": "cuda", ...}
+
     """
-    assert_config(config, required_fields)
+
+    if isinstance(required_fields, Sequence):
+        return deprecated_get_params(config, required_fields)
+
+    if not (isinstance(required_fields, type) and issubclass(required_fields, Schema)):
+        raise ValueError("Argument required_fields should be a class (not instance) derived from Schema")
+
+    result = required_fields.validate(config)
     params = {}
-    for k, _ in required_fields:
-        obj = getattr(config, k)
-        k = k.replace("_", " ")
-        if isinstance(obj, (Number, str, bool)):
-            params[k] = obj
-        elif hasattr(obj, "__len__"):
-            params[k] = len(obj)
-            if hasattr(obj, "batch_size"):
-                params['{} batch size'.format(k)] = obj.batch_size
-        elif hasattr(obj, "__class__"):
-            params[k] = obj.__class__.__name__
+    for k, v in result.dict().items():
+        if isinstance(v, (Number, str, bool)):
+            params[k] = v
+        elif hasattr(v, "__len__"):
+            params[k] = len(v)  # type: ignore[assignment]
+            if hasattr(v, "batch_size"):
+                params["{} batch size".format(k)] = v.batch_size
+        elif hasattr(v, "__class__"):
+            params[k] = v.__class__.__name__
 
     return params
-
-
-BASE_CONFIG = (
-    ("seed", Integral),
-    ("debug", bool),
-)
-
-
-class SizedIterable(Sized, Iterable):
-    __slots__ = ()
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is SizedIterable:
-            if any(m in B.__dict__ for B in C.__mro__
-                   for m in ("__len__", "__iter__")):
-                return True
-        return NotImplemented
-
-
-try:
-
-    import torch
-    from torch.utils.data import DataLoader
-
-    TORCH_DL_BASE_CONFIG = BASE_CONFIG + (
-        ("device", str),
-        ("model", torch.nn.Module),
-    )
-
-    TRAIN_CONFIG = TORCH_DL_BASE_CONFIG + (
-        ("train_loader", (DataLoader, SizedIterable)),
-        ("num_epochs", Integral),
-        ("criterion", torch.nn.Module),
-        ("optimizer", torch.optim.Optimizer),
-    )
-
-    TRAINVAL_CONFIG = TRAIN_CONFIG + (
-        ("train_eval_loader", (DataLoader, SizedIterable)),
-        ("val_loader", (DataLoader, SizedIterable)),
-        ("lr_scheduler", object)
-    )
-
-    INFERENCE_CONFIG = TORCH_DL_BASE_CONFIG + (
-        ("data_loader", (DataLoader, SizedIterable)),
-        ("weights", str),
-        ("training_run_uuid", str),
-    )
-
-
-except ImportError:
-    import warnings
-    warnings.warn("As no torch module found, TRAIN_CONFIG, INFERENCE_CONFIG are not defined. Please install pytorch")

@@ -1,9 +1,5 @@
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
-
-from py_config_runner.runner import run_script, _setup_config, _check_script, _ConfigObject
+from pathlib import Path
+from py_config_runner.runner import run_script, _check_script
 
 import pytest
 
@@ -22,7 +18,7 @@ b = np.array([1, 2, 3])
     with script_fp.open("w") as h:
         h.write(s)
 
-    with pytest.raises(RuntimeError, match="should contain a method `run"):
+    with pytest.raises(RuntimeError, match="should contain a method run"):
         run_script(script_fp, "")
 
 
@@ -60,23 +56,10 @@ def test_run_script(capsys, script_filepath, config_filepath):  # noqa: F811
     run_script(script_filepath, config_filepath)
 
     captured = capsys.readouterr()
-    out = captured.out.split('\r')
+    out = captured.out.split("\r")
     out = list(map(lambda x: x.strip(), out))
     out = list(filter(None, out))
     assert "Run\n1\n2\n{}\n{}".format(config_filepath.as_posix(), script_filepath.as_posix()) in out[-1]
-
-
-def test_run_logging_script(capsys, logging_script_filepath, config_filepath):  # noqa: F811
-
-    run_script(logging_script_filepath, config_filepath)
-
-    captured = capsys.readouterr()
-    out = captured.err.split('\n')
-    out = list(map(lambda x: x.strip(), out))
-    out = list(filter(None, out))
-    assert "|script|INFO| Start run script" in out[0]
-    assert "|script|INFO| 1" in out[1]
-    assert "|script|INFO| 2" in out[2]
 
 
 def test_run_script_raise_exeption(dirname, config_filepath):  # noqa: F811
@@ -90,7 +73,7 @@ def run(config, **kwargs):
     with script_fp.open("w") as h:
         h.write(s)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match=r"STOP"):
         run_script(script_fp, config_filepath)
 
 
@@ -106,7 +89,9 @@ def run(config, **kwargs):
     assert getattr(config, 'b', None) == 2
     assert getattr(config, 'config_filepath', None) == Path("{}")
     assert getattr(config, 'script_filepath', None) == Path("{}")
-    """.format(config_filepath, script_fp)
+    """.format(
+        config_filepath, script_fp
+    )
 
     with script_fp.open("w") as h:
         h.write(s)
@@ -128,29 +113,34 @@ def run(config, local_rank=0, **kwargs):
     run_script(script_fp, config_filepath, local_rank=1)
 
 
-def test__setup_config(config_filepath, script_filepath):
-
-    config = _setup_config(config_filepath, script_filepath)
-
-    assert getattr(config, 'a', None) == 1
-    assert getattr(config, 'b', None) == 2
-    assert getattr(config, 'config_filepath', None) == Path(config_filepath)
-    assert getattr(config, 'script_filepath', None) == Path(script_filepath)
-
-
-def test__ConfigObject(config_filepath, script_filepath):
-
-    config = _ConfigObject(config_filepath, script_filepath)
-
-    assert getattr(config, 'a', None) == 1
-    assert getattr(config, 'b', None) == 2
-    assert getattr(config, 'config_filepath', None) == Path(config_filepath)
-    assert getattr(config, 'script_filepath', None) == Path(script_filepath)
-
-
 def test_example(example_baseline_config, example_scripts_training, example_path):
 
     import sys
+
     sys.path.insert(0, example_path.as_posix())
     run_script(example_scripts_training, example_baseline_config)
-    run_script(example_scripts_training, example_baseline_config, manual_config_load=True)
+
+
+def test_run_script_with_schema(dirname, config_filepath):  # noqa: F811
+    script_fp = dirname / "script_with_schema.py"
+
+    s = """
+from py_config_runner import Schema
+
+
+class MyConfigSchema(Schema):
+    # Define required parameters for a training config
+    # Type hints are from typing
+    a: int
+    data: int
+
+
+def run(config, **kwargs):
+
+    MyConfigSchema.validate(config)
+    """
+
+    with script_fp.open("w") as h:
+        h.write(s)
+
+    run_script(script_fp, config_filepath)
