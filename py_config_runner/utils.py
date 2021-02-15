@@ -1,4 +1,4 @@
-import importlib.util
+from importlib.machinery import SourceFileLoader
 import sys
 
 from collections.abc import MutableMapping
@@ -24,15 +24,10 @@ def load_module(filepath: Union[str, Path]) -> Any:
     if not filepath.exists():
         raise ValueError(f"File '{filepath.as_posix()}' is not found")
 
-    module_name = filepath.stem
-    if module_name in sys.modules:
-        module_name += "__py_config_runner"
-    spec = importlib.util.spec_from_file_location(module_name, filepath)
-    module = importlib.util.module_from_spec(spec)
-    # required by pydantic to work: https://github.com/samuelcolvin/pydantic/issues/2363
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    return module
+    if not filepath.is_file():
+        raise ValueError(f"Path '{filepath.as_posix()}' should be a file")
+
+    return SourceFileLoader(filepath.stem, filepath.as_posix()).load_module()  # type: ignore[call-arg]
 
 
 class ConfigObject(MutableMapping):
