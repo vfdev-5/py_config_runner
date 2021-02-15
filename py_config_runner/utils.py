@@ -37,6 +37,23 @@ def load_module(filepath: Union[str, Path]) -> Any:
 
 class ConfigObject(MutableMapping):
     """Lazy config object
+
+    Args:
+        filepath (str or Path): path to python configuration file
+
+    Returns:
+        ConfigObject
+
+    Example:
+
+    .. code-block:: python
+
+        config = ConfigObject("/path/to/baseline.py")
+        print(config)
+        # For example, configuration file contains params: seed, ...
+
+        print(config.seed, config["seed"], config.get("seed"))
+
     """
 
     def __init__(self, config_filepath: Union[str, Path], **kwargs: Any) -> None:

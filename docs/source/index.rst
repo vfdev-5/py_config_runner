@@ -27,7 +27,8 @@ Examples
 
 .. toctree::
    :maxdepth: 2
-   :caption: Additional Tools
+   :caption: CLI & Python API
 
+   cli
    config_utils
    utils

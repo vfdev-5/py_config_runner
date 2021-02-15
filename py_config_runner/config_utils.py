@@ -55,6 +55,14 @@ class Schema(BaseModel):
 
 
 class BaseConfigSchema(Schema):
+    """Base configuration schema.
+
+    Schema defines required parameters:
+        - seed (int)
+        - debug (bool), default False
+
+    """
+
     seed: int
     debug: bool = False
 
@@ -64,24 +72,59 @@ if has_torch:
     from py_config_runner.deprecated import TORCH_DL_BASE_CONFIG, TRAIN_CONFIG, TRAINVAL_CONFIG, INFERENCE_CONFIG
 
     class TorchModelConfigSchema(BaseConfigSchema):
+        """Base configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.BaseConfigSchema`.
+
+        Schema defines required parameters:
+            - device (str), default "cuda"
+            - model (torch.nn.Module)
+
+        """
+
         device: str = "cuda"
         model: torch.nn.Module
 
     class TrainConfigSchema(TorchModelConfigSchema):
+        """Training configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.TorchModelConfigSchema`.
+
+        Schema defines required parameters:
+            - train_loader (torch DataLoader or Iterable)
+            - num_epochs (int)
+            - criterion (torch.nn.Module)
+            - optimizer (Any)
+        """
+
         train_loader: Union[DataLoader, Iterable]
         num_epochs: int
         criterion: torch.nn.Module
         optimizer: Any
 
     class TrainvalConfigSchema(TrainConfigSchema):
+        """Training/Validation configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.TrainConfigSchema`.
+
+        Schema defines required parameters:
+            - train_eval_loader (torch DataLoader or Iterable)
+            - val_loader (torch DataLoader or Iterable)
+            - lr_scheduler (Any)
+        """
+
         train_eval_loader: Optional[Union[DataLoader, Iterable]]
         val_loader: Union[DataLoader, Iterable]
         lr_scheduler: Any
 
     class InferenceConfigSchema(TorchModelConfigSchema):
+        """Inference configuration schema with a PyTorch model. Derived from
+        :class:`py_config_runner.config_utils.TorchModelConfigSchema`.
+
+        Schema defines required parameters:
+            - data_loader (torch DataLoader or Iterable)
+            - weights_path (str)
+        """
+
         data_loader: Union[DataLoader, Iterable]
-        weights: str
-        training_run_id: str
+        weights_path: str
 
 
 def get_params(config: ConfigObject, required_fields: Union[Type[Schema], Sequence]) -> Dict:

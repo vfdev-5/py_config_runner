@@ -8,7 +8,6 @@ from torchvision.models import resnet18
 from utils import get_mnist_data_loaders
 
 seed = 12
-device = "cpu"
 debug = False
 train_batch_size = 128
 val_batch_size = 512
@@ -29,5 +28,5 @@ model.conv1 = nn.Conv2d(1, 64, 3)
 optimizer = SGD(model.parameters(), lr=0.01)
 criterion = nn.CrossEntropyLoss()
 
-num_epochs = 3
+num_epochs = 5
 val_interval = 2

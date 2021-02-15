@@ -41,13 +41,6 @@ jobs:
             cd examples/basic
             python -u main.py --config=configs/baseline_train.py
             py_config_runner training.py configs/baseline_train.py
-
-      - run:
-          name: Run example (pytorch)
-          command: |            
-            cd examples/pytorch
-            python -u main.py --config=configs/baseline_train_pytorch.py
-            py_config_runner training.py configs/baseline_train_pytorch.py
     
       - run: codecov
       - save_cache:

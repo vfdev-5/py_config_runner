@@ -18,7 +18,7 @@ b = np.array([1, 2, 3])
     with script_fp.open("w") as h:
         h.write(s)
 
-    with pytest.raises(RuntimeError, match="should contain a method `run"):
+    with pytest.raises(RuntimeError, match="should contain a method run"):
         run_script(script_fp, "")
 
 
