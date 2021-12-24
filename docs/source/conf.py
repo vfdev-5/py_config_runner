@@ -64,10 +64,12 @@ release = py_config_runner.__version__
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -118,7 +120,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -157,9 +159,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, "py_config_runner.tex", "py_config_runner Documentation", "vfdev-5", "manual",),
-]
+latex_documents = [(master_doc, "py_config_runner.tex", "py_config_runner Documentation", "vfdev-5", "manual")]
 
 
 # -- Options for manual page output ------------------------------------------
@@ -187,3 +187,18 @@ texinfo_documents = [
 ]
 
 # -- Extension configuration -------------------------------------------------
+
+# -- Options for intersphinx extension ---------------------------------------
+
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "torch": ("https://pytorch.org/docs/stable/", None),
+}
+
+# -- Type hints configs ------------------------------------------------------
+
+autodoc_inherit_docstrings = True
+autoclass_content = "both"
+autodoc_typehints = "description"
+napoleon_attr_annotations = True

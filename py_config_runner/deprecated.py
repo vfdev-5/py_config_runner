@@ -136,7 +136,10 @@ BASE_CONFIG = (
 
 if has_torch:
 
-    TORCH_DL_BASE_CONFIG = BASE_CONFIG + (("device", str), ("model", torch.nn.Module),)
+    TORCH_DL_BASE_CONFIG = BASE_CONFIG + (
+        ("device", str),
+        ("model", torch.nn.Module),
+    )
 
     TRAIN_CONFIG = TORCH_DL_BASE_CONFIG + (
         ("train_loader", (DataLoader, Iterable)),

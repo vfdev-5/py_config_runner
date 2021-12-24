@@ -51,7 +51,7 @@ def run():
         run_script(script_fp, "")
 
 
-def test_run_script(capsys, script_filepath, config_filepath):  # noqa: F811
+def test_run_script_correct(capsys, script_filepath, config_filepath):  # noqa: F811
 
     run_script(script_filepath, config_filepath)
 

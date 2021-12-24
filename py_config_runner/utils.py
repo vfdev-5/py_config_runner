@@ -1,9 +1,8 @@
 from importlib.machinery import SourceFileLoader
-import sys
 
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Any, Callable, Iterator, Optional, Union
+from typing import Any, Iterator, Optional, Union
 
 from py_config_runner.deprecated import (
     LOGGING_FORMATTER,
@@ -17,7 +16,7 @@ def load_module(filepath: Union[str, Path]) -> Any:
     """Method to load module from file path
 
     Args:
-        filepath (str or Path): path to module to load
+        filepath: path to module to load
 
     """
     filepath = Path(filepath)
@@ -34,10 +33,9 @@ class ConfigObject(MutableMapping):
     """Lazy config object
 
     Args:
-        filepath (str or Path): path to python configuration file
-
-    Returns:
-        ConfigObject
+        config_filepath: path to python configuration file
+        kwargs: kwargs to pass to the config object. Note that for colliding keys retained value is
+            the one from ``config_filepath``.
 
     Example:
 
