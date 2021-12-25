@@ -1,5 +1,5 @@
 from numbers import Number
-from collections.abc import Iterable, Sized
+from collections.abc import Iterable
 from typing import Any, Union, Optional, Sequence, Type, Dict
 from pydantic import BaseModel
 
@@ -50,7 +50,7 @@ class Schema(BaseModel):
         arbitrary_types_allowed = True
 
     @classmethod
-    def validate(cls, config):
+    def validate(cls, config: ConfigObject) -> "Schema":
         return cls(**config)
 
 

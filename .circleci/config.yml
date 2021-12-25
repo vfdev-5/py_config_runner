@@ -10,7 +10,7 @@ jobs:
       - run:
           name: Install tools
           command: |
-            pip install flake8 "black==19.10b0"
+            pip install flake8 black
       - run:
           name: Check code-formatting
           command: |
@@ -41,7 +41,7 @@ jobs:
             cd examples/basic
             python -u main.py --config=configs/baseline_train.py
             py_config_runner training.py configs/baseline_train.py
-    
+
       - run: codecov
       - save_cache:
           key: conda-py37

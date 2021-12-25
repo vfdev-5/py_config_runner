@@ -12,8 +12,8 @@ def run_script(script_file: str, config_file: str, **kwargs: Any) -> None:
     """Method to run experiment (defined by a script file)
 
     Args:
-        script_filepath (str): input script filepath. Script should contain ``run(config, **kwargs)`` method.
-        config_filepath (str): input configuration filepath
+        script_filepath: input script filepath. Script should contain ``run(config, **kwargs)`` method.
+        config_filepath: input configuration filepath
     """
     # Add config path and current working directory to sys.path to correctly load the configuration
     script_filepath = Path(script_file)

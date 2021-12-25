@@ -35,6 +35,7 @@ def script_filepath():
     path = Path(tempfile.mkdtemp())
     script_filepath = path / "script.py"
     data = """
+from pathlib import Path
 
 def run(config, **kwargs):
     print("Run")
@@ -42,6 +43,8 @@ def run(config, **kwargs):
     assert config.b == 2
     print(config.a)
     print(config.b)
+    assert isinstance(config.config_filepath, Path), type(config.config_filepath)
+    assert isinstance(config.script_filepath, Path), type(config.script_filepath)
     print(config.config_filepath.as_posix())
     print(config.script_filepath.as_posix())
         """

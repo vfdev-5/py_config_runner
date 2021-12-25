@@ -12,6 +12,7 @@ def test_config_object(config_filepath):
     assert config["a"] == config.a == config.get("a") == 1
     assert "b" in config
     assert config["b"] == config.b == config.get("b") == 2
+    assert config["_data"] == config._data == config.get("_data") == 3
 
     config.c = 3
     config["d"] = 4
@@ -66,6 +67,14 @@ def test_config_object_repr(config_filepath):
     assert "b" in out
     assert "data" in out
     assert "_data" in out
+
+
+def test_config_object_init_kwargs(config_filepath):
+    # Pass a as kwargs
+    config = ConfigObject(config_filepath, a=10, another_data=123)
+    # assert that a is overriden by config_filepath
+    assert config.a == 1
+    assert config.another_data == 123
 
 
 def test_load_module(dirname):
