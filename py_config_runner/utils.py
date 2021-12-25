@@ -1,8 +1,10 @@
+import ast
+import sys
 from importlib.machinery import SourceFileLoader
 
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Iterator, Mapping, Dict, Optional, Union
 
 from py_config_runner.deprecated import (
     LOGGING_FORMATTER,
@@ -34,6 +36,8 @@ class ConfigObject(MutableMapping):
 
     Args:
         config_filepath: path to python configuration file
+        mutations: dict of contant mutations to apply to the configuration python file before loading.
+            See example below.
         kwargs: kwargs to pass to the config object. Note that for colliding keys retained value is
             the one from ``config_filepath``.
 
@@ -47,11 +51,41 @@ class ConfigObject(MutableMapping):
 
         print(config.seed, config["seed"], config.get("seed"))
 
+    Example with mutations:
+
+    Let's assume that configuration python file has ``learning_rate = 0.01`` which is used to
+    configure an optimizer:
+
+    .. code-block:: python
+
+        # baseline.py configuration file
+
+        learning_rate = 0.01
+
+        optimizer = SGD(parameters, lr=learning_rate)
+
+    And we would like to override ``learning_rate`` from the script using above configuration file
+    and has also optimizer updated accordingly:
+
+    .. code-block:: python
+
+        # Script file using baseline.py configuration
+
+        config = ConfigObject("/path/to/baseline.py", mutations={"learning_rate": 0.05})
+        print(config)
+        print(config.optimizer)
+        # assert config.optimizer.lr == 0.05
+
     """
 
-    def __init__(self, config_filepath: Union[str, Path], **kwargs: Any) -> None:
+    def __init__(self, config_filepath: Union[str, Path], mutations: Optional[Mapping] = None, **kwargs: Any) -> None:
+        if mutations is not None:
+            if not (sys.version_info.major >= 3 and sys.version_info.minor >= 7):
+                raise RuntimeError("Mutations are not supported on Python versions < 3.7")
+
         super().__init__()
         self.__dict__["_is_loaded"] = False
+        self.__dict__["_mutations"] = mutations
         self.__dict__["__internal_config_object_data_dict__"] = {"config_filepath": config_filepath}
         self.__dict__["__internal_config_object_data_dict__"].update(kwargs)
 
@@ -95,11 +129,37 @@ class ConfigObject(MutableMapping):
         if self.__dict__["_is_loaded"]:
             return
         cfpath = self.__internal_config_object_data_dict__["config_filepath"]
-        _config = load_module(cfpath)
-        self.__internal_config_object_data_dict__.update(
-            {k: v for k, v in _config.__dict__.items() if not k.startswith("__")}
-        )
+        if self.__dict__["_mutations"] is None:
+            mod_obj = load_module(cfpath)
+            _config = mod_obj.__dict__
+        else:
+            _config = self._apply_mutations_and_load(cfpath, self.__dict__["_mutations"])
+
+        self.__internal_config_object_data_dict__.update({k: v for k, v in _config.items() if not k.startswith("__")})
         self.__dict__["_is_loaded"] = True
+
+    def _apply_mutations_and_load(self, filepath: Union[str, Path], mutations: Mapping) -> Mapping:
+        filepath = Path(filepath)
+        if not filepath.exists():
+            raise ValueError(f"File '{filepath.as_posix()}' is not found")
+
+        if not filepath.is_file():
+            raise ValueError(f"Path '{filepath.as_posix()}' should be a file")
+
+        with filepath.open("r") as h:
+            config_source = h.read()
+
+        ast_obj = ast.parse(config_source)
+        if sys.version_info.major == 3 and sys.version_info.minor < 8:
+            _ConstMutatorPy37(mutations).visit(ast_obj)
+        else:
+            _ConstMutator(mutations).visit(ast_obj)
+        compiled_obj = compile(ast_obj, "<string>", "exec")
+
+        config: Dict[str, Any] = {}
+        # Config is passed as globals
+        exec(compiled_obj, config)
+        return config
 
     def __repr__(self):
         self._load_if_not()
@@ -109,3 +169,34 @@ class ConfigObject(MutableMapping):
         for k, v in self.items():
             output.append(f"\t{k}: {v}")
         return "\n".join(output)
+
+
+class _ConstMutator(ast.NodeTransformer):
+    def __init__(self, mutations: Mapping):
+        self.mutations = mutations
+
+    def visit_Assign(self, node: ast.Assign) -> ast.Assign:
+        if len(node.targets) == 1 and isinstance(node.value, ast.Constant):
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                if target.id in self.mutations:
+                    node.value.value = self.mutations[target.id]
+        return node
+
+
+class _ConstMutatorPy37(ast.NodeTransformer):
+    def __init__(self, mutations: Mapping):
+        self.mutations = mutations
+
+    def visit_Assign(self, node: ast.Assign) -> ast.Assign:
+        if len(node.targets) == 1 and isinstance(node.value, (ast.Num, ast.Str, ast.NameConstant)):
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                if target.id in self.mutations:
+                    if isinstance(node.value, ast.Num):
+                        node.value.n = self.mutations[target.id]
+                    elif isinstance(node.value, ast.Str):
+                        node.value.s = self.mutations[target.id]
+                    elif isinstance(node.value, ast.NameConstant):
+                        node.value.value = self.mutations[target.id]
+        return node

@@ -77,6 +77,77 @@ def test_config_object_init_kwargs(config_filepath):
     assert config.another_data == 123
 
 
+def test_config_object_lazy_load(dirname):
+    filepath = os.path.join(dirname, "bad_config.py")
+
+    s = """
+a = 123
+
+raise RuntimeError("error")
+    """
+
+    with open(filepath, "w") as h:
+        h.write(s)
+
+    config = ConfigObject(filepath)
+
+    with pytest.raises(RuntimeError, match=r"error"):
+        assert config.a == 123
+
+
+def test_config_object_mutations(dirname):
+    filepath = os.path.join(dirname, "custom_module.py")
+
+    s = """
+
+a = 123
+b = 12.3
+c = "abc"
+d = True
+# e = None
+
+
+def func(x):
+    return x + a
+
+out = func(10)
+
+def func2(x):
+    return x + b
+
+out2 = func2(1.0)
+
+
+def func3(x):
+    if x == "abc":
+        return 1.0
+    elif x == "cba":
+        return -1.0
+    else:
+        return 0.0
+
+out3 = func3(c)
+
+
+out4 = 10 if d else -10
+# out5 = 10 if e is None else -10
+    """
+
+    with open(filepath, "w") as h:
+        h.write(s)
+
+    config = ConfigObject(filepath, mutations={"a": 333, "b": 22.0, "c": "cba", "d": False})
+
+    assert config.a == 333
+    assert config.out == 10 + 333
+    assert config.b == 22.0
+    assert config.out2 == 1.0 + 22.0
+    assert config.c == "cba"
+    assert config.out3 == -1.0
+    assert not config.d
+    assert config.out4 == -10
+
+
 def test_load_module(dirname):
     import numpy as np
 
