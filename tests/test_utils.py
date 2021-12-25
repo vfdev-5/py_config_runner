@@ -3,6 +3,7 @@ import pytest
 from pathlib import Path
 
 from py_config_runner import ConfigObject, load_module
+from py_config_runner.utils import _ConstMutatorPy37
 
 
 def test_config_object(config_filepath):
@@ -148,6 +149,28 @@ out4 = 10 if d else -10
     assert config.out4 == -10
 
 
+def test_config_object_mutations_validate(dirname):
+    filepath = os.path.join(dirname, "custom_module.py")
+
+    s = """
+
+a = 123
+
+def func(x):
+    return x + a
+
+out = func(10)
+    """
+
+    with open(filepath, "w") as h:
+        h.write(s)
+
+    config = ConfigObject(filepath, mutations={"a": 333, "b": 22.0})
+
+    with pytest.raises(RuntimeError, match=r"Following mutations were not applied"):
+        assert config.a == 333
+
+
 def test_load_module(dirname):
     import numpy as np
 
@@ -177,3 +200,26 @@ def test_load_module_wrong_args():
 
     with pytest.raises(ValueError, match=r"should be a file"):
         load_module("/tmp/")
+
+
+def test__ConstMutatorPy37():
+    import ast
+
+    config_source = """
+a = 1
+b = 1.0
+c = True
+d = "abc"
+    """
+
+    ast_obj = ast.parse(config_source)
+
+    mutations = {"a": 12, "b": 3.4, "c": False, "d": "cba"}
+    mutator = _ConstMutatorPy37(mutations)
+    mutator.visit(ast_obj)
+
+    ast_obj_str = ast.dump(ast_obj)
+    assert "=12" in ast_obj_str
+    assert "=3.4" in ast_obj_str
+    assert "=False" in ast_obj_str
+    assert "='cba'" in ast_obj_str

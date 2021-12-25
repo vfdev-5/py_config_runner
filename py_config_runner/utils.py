@@ -36,8 +36,8 @@ class ConfigObject(MutableMapping):
 
     Args:
         config_filepath: path to python configuration file
-        mutations: dict of contant mutations to apply to the configuration python file before loading.
-            See example below.
+        mutations: dict of contant mutations (int, float, str, bool) to apply to the configuration
+            python file before loading. See example below.
         kwargs: kwargs to pass to the config object. Note that for colliding keys retained value is
             the one from ``config_filepath``.
 
@@ -151,9 +151,11 @@ class ConfigObject(MutableMapping):
 
         ast_obj = ast.parse(config_source)
         if sys.version_info.major == 3 and sys.version_info.minor < 8:
-            _ConstMutatorPy37(mutations).visit(ast_obj)
+            mutator: _ConstMutator = _ConstMutatorPy37(mutations)
         else:
-            _ConstMutator(mutations).visit(ast_obj)
+            mutator = _ConstMutator(mutations)
+        mutator.visit(ast_obj)
+        mutator.validate()
         compiled_obj = compile(ast_obj, "<string>", "exec")
 
         config: Dict[str, Any] = {}
@@ -174,29 +176,42 @@ class ConfigObject(MutableMapping):
 class _ConstMutator(ast.NodeTransformer):
     def __init__(self, mutations: Mapping):
         self.mutations = mutations
+        self._used_mutations = set(self.mutations)
 
     def visit_Assign(self, node: ast.Assign) -> ast.Assign:
         if len(node.targets) == 1 and isinstance(node.value, ast.Constant):
             target = node.targets[0]
             if isinstance(target, ast.Name):
-                if target.id in self.mutations:
-                    node.value.value = self.mutations[target.id]
+                key = target.id
+                if key in self.mutations:
+                    node.value.value = self.mutations[key]
+                    self._used_mutations.remove(key)
         return node
 
+    def validate(self):
+        if len(self._used_mutations) > 0:
+            raise RuntimeError(
+                f"Following mutations were not applied: {list(self._used_mutations)}. "
+                "Please make sure that mutations argument contains correct values. "
+                "Otherwise, please open an issue on https://github.com/vfdev-5/py_config_runner/issues/new ."
+                "Thank you!"
+            )
 
-class _ConstMutatorPy37(ast.NodeTransformer):
-    def __init__(self, mutations: Mapping):
-        self.mutations = mutations
 
+class _ConstMutatorPy37(_ConstMutator):
     def visit_Assign(self, node: ast.Assign) -> ast.Assign:
         if len(node.targets) == 1 and isinstance(node.value, (ast.Num, ast.Str, ast.NameConstant)):
             target = node.targets[0]
             if isinstance(target, ast.Name):
-                if target.id in self.mutations:
+                key = target.id
+                if key in self.mutations:
                     if isinstance(node.value, ast.Num):
-                        node.value.n = self.mutations[target.id]
+                        node.value.n = self.mutations[key]
+                        self._used_mutations.remove(key)
                     elif isinstance(node.value, ast.Str):
-                        node.value.s = self.mutations[target.id]
+                        node.value.s = self.mutations[key]
+                        self._used_mutations.remove(key)
                     elif isinstance(node.value, ast.NameConstant):
-                        node.value.value = self.mutations[target.id]
+                        node.value.value = self.mutations[key]
+                        self._used_mutations.remove(key)
         return node
