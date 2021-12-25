@@ -14,7 +14,7 @@ pip install torch torchvision
 cd basic
 ```
 
-- [`main.py`](basic/main.py): entrypoint script with argparse accepts a configuration file and 
+- [`main.py`](basic/main.py): entrypoint script with argparse accepts a configuration file and
 uses `py_config_runner.ConfigObject` to parse python configuration file.
 
 - [`training.py`](basic/training.py): module defines `run` method and how configuration is consumed.
@@ -40,7 +40,7 @@ py_config_runner training.py configs/baseline_train.py
 cd pytorch
 ```
 
-- [`main.py`](pytorch/main.py): entrypoint script with argparse accepts a configuration file and 
+- [`main.py`](pytorch/main.py): entrypoint script with argparse accepts a configuration file and
 uses `py_config_runner.ConfigObject` to parse python configuration file.
 
 - [`training.py`](pytorch/training.py): module defines `run` method and how configuration is consumed.

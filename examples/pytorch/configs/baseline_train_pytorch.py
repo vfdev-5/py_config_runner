@@ -25,7 +25,9 @@ train_loader, val_loader = get_mnist_data_loaders(
 model = resnet18(num_classes=10)
 model.conv1 = nn.Conv2d(1, 64, 3)
 
-optimizer = SGD(model.parameters(), lr=0.01)
+learning_rate = 0.01
+
+optimizer = SGD(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 
 num_epochs = 5
