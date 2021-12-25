@@ -27,9 +27,6 @@ if __name__ == "__main__":
     if args.ep is not None:
         mutations["num_epochs"] = args.ep
 
-    if len(mutations) < 1:
-        mutations = None
-
     # Pass configuration file into py_config_runner.ConfigObject
     # and fetch configuration parameters as attributes
     # see inside run() function

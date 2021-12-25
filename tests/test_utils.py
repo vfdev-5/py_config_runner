@@ -149,6 +149,11 @@ out4 = 10 if d else -10
     assert config.out4 == -10
 
 
+def test_config_object_mutations_assert(config_filepath):
+    with pytest.raises(TypeError, match=r"Argument mutations should be a mapping"):
+        ConfigObject(config_filepath, mutations="abc")
+
+
 def test_config_object_mutations_validate(dirname):
     filepath = os.path.join(dirname, "custom_module.py")
 
