@@ -82,6 +82,8 @@ class ConfigObject(MutableMapping):
         if mutations is not None:
             if not (sys.version_info.major >= 3 and sys.version_info.minor >= 7):
                 raise RuntimeError("Mutations are not supported on Python versions < 3.7")
+            if not isinstance(mutations, Mapping):
+                raise TypeError(f"Argument mutations should be a mapping, got {type(mutations)}")
 
         super().__init__()
         self.__dict__["_is_loaded"] = False
@@ -129,11 +131,12 @@ class ConfigObject(MutableMapping):
         if self.__dict__["_is_loaded"]:
             return
         cfpath = self.__internal_config_object_data_dict__["config_filepath"]
-        if self.__dict__["_mutations"] is None:
+        mutations = self.__dict__["_mutations"]
+        if mutations is None or len(mutations) < 1:
             mod_obj = load_module(cfpath)
             _config = mod_obj.__dict__
         else:
-            _config = self._apply_mutations_and_load(cfpath, self.__dict__["_mutations"])
+            _config = self._apply_mutations_and_load(cfpath, mutations)
 
         self.__internal_config_object_data_dict__.update({k: v for k, v in _config.items() if not k.startswith("__")})
         self.__dict__["_is_loaded"] = True
