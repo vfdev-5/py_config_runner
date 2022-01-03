@@ -36,7 +36,7 @@ class ConfigObject(MutableMapping):
 
     Args:
         config_filepath: path to python configuration file
-        mutations: dict of contant mutations (int, float, str, bool) to apply to the configuration
+        mutations: dict of constant mutations (int, float, str, bool) to apply to the configuration
             python file before loading. See example below.
         kwargs: kwargs to pass to the config object. Note that for colliding keys retained value is
             the one from ``config_filepath``.
