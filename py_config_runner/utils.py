@@ -193,7 +193,7 @@ class _ConstMutator(ast.NodeTransformer):
                 raise ValueError(base_err_msg + f"Value AST body is empty: {value_ast.body}")
             if not hasattr(value_ast.body[0], "value"):
                 raise ValueError(base_err_msg + f"Value AST body[0] has no 'value': {value_ast.body[0]}")
-            output[key] = value_ast.body[0].value
+            output[key] = value_ast.body[0].value  # type: ignore[attr-defined]
         return output
 
     def __init__(self, mutations_ast: Mapping):
