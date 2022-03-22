@@ -85,6 +85,8 @@ class ConfigObject(MutableMapping):
             if not isinstance(mutations, Mapping):
                 raise TypeError(f"Argument mutations should be a mapping, got {type(mutations)}")
 
+            mutations = _ConstMutator.to_mutations_ast(mutations)
+
         super().__init__()
         self.__dict__["_is_loaded"] = False
         self.__dict__["_mutations"] = mutations
@@ -153,10 +155,7 @@ class ConfigObject(MutableMapping):
             config_source = h.read()
 
         ast_obj = ast.parse(config_source)
-        if sys.version_info.major == 3 and sys.version_info.minor < 8:
-            mutator: _ConstMutator = _ConstMutatorPy37(mutations)
-        else:
-            mutator = _ConstMutator(mutations)
+        mutator = _ConstMutator(mutations)
         mutator.visit(ast_obj)
         mutator.validate()
         compiled_obj = compile(ast_obj, "<string>", "exec")
@@ -177,17 +176,37 @@ class ConfigObject(MutableMapping):
 
 
 class _ConstMutator(ast.NodeTransformer):
-    def __init__(self, mutations: Mapping):
-        self.mutations = mutations
+    @staticmethod
+    def to_mutations_ast(mutations: Mapping) -> Mapping:
+        output = {}
+        for key, value in mutations.items():
+            # check if value can be transformed to AST using repr
+            value_repr = repr(value)
+            base_err_msg = f"Unsupported mutation type for value: {value} corresponding to '{key}'. "
+            try:
+                value_ast = ast.parse(value_repr)
+            except SyntaxError:
+                raise ValueError(base_err_msg + "Failed to create value's AST")
+            if not hasattr(value_ast, "body"):
+                raise ValueError(base_err_msg + f"Value AST has no 'body': {value_ast}")
+            if len(value_ast.body) < 1:
+                raise ValueError(base_err_msg + f"Value AST body is empty: {value_ast.body}")
+            if not hasattr(value_ast.body[0], "value"):
+                raise ValueError(base_err_msg + f"Value AST body[0] has no 'value': {value_ast.body[0]}")
+            output[key] = value_ast.body[0].value
+        return output
+
+    def __init__(self, mutations_ast: Mapping):
+        self.mutations = mutations_ast
         self._used_mutations = set(self.mutations)
 
     def visit_Assign(self, node: ast.Assign) -> ast.Assign:
-        if len(node.targets) == 1 and isinstance(node.value, ast.Constant):
+        if len(node.targets) == 1:
             target = node.targets[0]
             if isinstance(target, ast.Name):
                 key = target.id
                 if key in self.mutations:
-                    node.value.value = self.mutations[key]
+                    node.value = self.mutations[key]
                     self._used_mutations.remove(key)
         return node
 
@@ -199,22 +218,3 @@ class _ConstMutator(ast.NodeTransformer):
                 "Otherwise, please open an issue on https://github.com/vfdev-5/py_config_runner/issues/new ."
                 "Thank you!"
             )
-
-
-class _ConstMutatorPy37(_ConstMutator):
-    def visit_Assign(self, node: ast.Assign) -> ast.Assign:
-        if len(node.targets) == 1 and isinstance(node.value, (ast.Num, ast.Str, ast.NameConstant)):
-            target = node.targets[0]
-            if isinstance(target, ast.Name):
-                key = target.id
-                if key in self.mutations:
-                    if isinstance(node.value, ast.Num):
-                        node.value.n = self.mutations[key]
-                        self._used_mutations.remove(key)
-                    elif isinstance(node.value, ast.Str):
-                        node.value.s = self.mutations[key]
-                        self._used_mutations.remove(key)
-                    elif isinstance(node.value, ast.NameConstant):
-                        node.value.value = self.mutations[key]
-                        self._used_mutations.remove(key)
-        return node
