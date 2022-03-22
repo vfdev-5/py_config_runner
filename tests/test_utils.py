@@ -3,7 +3,6 @@ import pytest
 from pathlib import Path
 
 from py_config_runner import ConfigObject, load_module
-from py_config_runner.utils import _ConstMutatorPy37
 
 
 def test_config_object(config_filepath):
@@ -149,9 +148,40 @@ out4 = 10 if d else -10
     assert config.out4 == -10
 
 
+@pytest.mark.parametrize(
+    "old_value",
+    [{"encoder": "E1", "decoder": "D1"}, "unet", [1, 2, 3], 5],
+)
+@pytest.mark.parametrize(
+    "new_value",
+    ["unet", [1, 2, 3], {"encoder": "E1", "decoder": "D1"}, 5],
+)
+def test_config_object_mutations_nonconst(old_value, new_value, dirname):
+    filepath = os.path.join(dirname, "custom_module.py")
+
+    s = f"""
+
+a = {old_value}
+
+    """
+
+    with open(filepath, "w") as h:
+        h.write(s)
+
+    config = ConfigObject(filepath, mutations={"a": new_value})
+
+    assert config.a == new_value
+
+
 def test_config_object_mutations_assert(config_filepath):
     with pytest.raises(TypeError, match=r"Argument mutations should be a mapping"):
         ConfigObject(config_filepath, mutations="abc")
+
+    class A:
+        pass
+
+    with pytest.raises(ValueError, match=r"Failed to create value's AST"):
+        ConfigObject(config_filepath, mutations={"a": A()})
 
 
 def test_config_object_mutations_validate(dirname):
@@ -205,26 +235,3 @@ def test_load_module_wrong_args():
 
     with pytest.raises(ValueError, match=r"should be a file"):
         load_module("/tmp/")
-
-
-def test__ConstMutatorPy37():
-    import ast
-
-    config_source = """
-a = 1
-b = 1.0
-c = True
-d = "abc"
-    """
-
-    ast_obj = ast.parse(config_source)
-
-    mutations = {"a": 12, "b": 3.4, "c": False, "d": "cba"}
-    mutator = _ConstMutatorPy37(mutations)
-    mutator.visit(ast_obj)
-
-    ast_obj_str = ast.dump(ast_obj)
-    assert "=12" in ast_obj_str
-    assert "=3.4" in ast_obj_str
-    assert "=False" in ast_obj_str
-    assert "='cba'" in ast_obj_str
