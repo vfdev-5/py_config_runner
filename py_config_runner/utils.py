@@ -36,7 +36,7 @@ class ConfigObject(MutableMapping):
 
     Args:
         config_filepath: path to python configuration file
-        mutations: dict of constant mutations (int, float, str, bool) to apply to the configuration
+        mutations: dict of mutations to apply to the configuration
             python file before loading. See example below.
         kwargs: kwargs to pass to the config object. Note that for colliding keys retained value is
             the one from ``config_filepath``.
@@ -61,20 +61,38 @@ class ConfigObject(MutableMapping):
         # baseline.py configuration file
 
         learning_rate = 0.01
+        hp_params = [1.0, 0.9, 0.8]
+        hp_dict = {"a": 0.5, "b": 0.75}
 
         optimizer = SGD(parameters, lr=learning_rate)
+        model = MyModel(hp_params, hp_dict)
 
-    And we would like to override ``learning_rate`` from the script using above configuration file
-    and has also optimizer updated accordingly:
+    And we would like to override ``learning_rate``, ``hp_params`` and ``hp_dict`` from the script using above
+    configuration file and has also optimizer and model updated accordingly:
 
     .. code-block:: python
 
         # Script file using baseline.py configuration
 
-        config = ConfigObject("/path/to/baseline.py", mutations={"learning_rate": 0.05})
+        mutations={
+            "learning_rate": 0.05,
+            "hp_params": 0.5  # here we can also change variable type
+            "hp_dict": {"a": 0.1, "b": 0.2}
+        }
+
+        config = ConfigObject("/path/to/baseline.py", mutations=mutations)
         print(config)
         print(config.optimizer)
+        # assert config.learning_rate == 0.05
         # assert config.optimizer.lr == 0.05
+
+        # assert config.hp_params == 0.5
+        # assert config.hp_dict == {"a": 0.1, "b": 0.2}
+
+    .. warning::
+
+        Mutation can not be a class instance or other complex python object.
+        The following **wont** work: ``mutations={"model": MyModel()}``.
 
     """
 
