@@ -1,4 +1,5 @@
 import ast
+import inspect
 import sys
 from importlib.machinery import SourceFileLoader
 
@@ -158,7 +159,8 @@ class ConfigObject(MutableMapping):
         else:
             _config = self._apply_mutations_and_load(cfpath, mutations)
 
-        self.__internal_config_object_data_dict__.update({k: v for k, v in _config.items() if not k.startswith("__")})
+        config_dict = {k: v for k, v in _config.items() if not (k.startswith("__") or inspect.ismodule(v))}
+        self.__internal_config_object_data_dict__.update(config_dict)
         self.__dict__["_is_loaded"] = True
 
     def _apply_mutations_and_load(self, filepath: Union[str, Path], mutations: Mapping) -> Mapping:
@@ -191,6 +193,13 @@ class ConfigObject(MutableMapping):
         for k, v in self.items():
             output.append(f"\t{k}: {v}")
         return "\n".join(output)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
 
 class _ConstMutator(ast.NodeTransformer):

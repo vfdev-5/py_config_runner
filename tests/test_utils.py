@@ -1,5 +1,7 @@
+import inspect
 import os
 import pytest
+import multiprocessing as mp
 from pathlib import Path
 
 from py_config_runner import ConfigObject, load_module
@@ -34,6 +36,9 @@ def test_config_object(config_filepath):
             assert k in kwargs
 
     foo(**config)
+
+    for k, v in config.__dict__.items():
+        assert not inspect.ismodule(v)
 
 
 def test_config_object_length(config_filepath):
@@ -78,7 +83,7 @@ def test_config_object_init_kwargs(config_filepath):
 
 
 def test_config_object_lazy_load(dirname):
-    filepath = os.path.join(dirname, "bad_config.py")
+    filepath = dirname / "bad_config.py"
 
     s = """
 a = 123
@@ -86,7 +91,7 @@ a = 123
 raise RuntimeError("error")
     """
 
-    with open(filepath, "w") as h:
+    with filepath.open("w") as h:
         h.write(s)
 
     config = ConfigObject(filepath)
@@ -96,7 +101,7 @@ raise RuntimeError("error")
 
 
 def test_config_object_mutations(dirname):
-    filepath = os.path.join(dirname, "custom_module.py")
+    filepath = dirname / "custom_module.py"
 
     s = """
 
@@ -133,7 +138,7 @@ out4 = 10 if d else -10
 # out5 = 10 if e is None else -10
     """
 
-    with open(filepath, "w") as h:
+    with filepath.open("w") as h:
         h.write(s)
 
     config = ConfigObject(filepath, mutations={"a": 333, "b": 22.0, "c": "cba", "d": False})
@@ -157,7 +162,7 @@ out4 = 10 if d else -10
     ["unet", [1, 2, 3], {"encoder": "E1", "decoder": "D1"}, 5],
 )
 def test_config_object_mutations_nonconst(old_value, new_value, dirname):
-    filepath = os.path.join(dirname, "custom_module.py")
+    filepath = dirname / "custom_module.py"
 
     s = f"""
 
@@ -165,7 +170,7 @@ a = {old_value}
 
     """
 
-    with open(filepath, "w") as h:
+    with filepath.open("w") as h:
         h.write(s)
 
     config = ConfigObject(filepath, mutations={"a": new_value})
@@ -184,8 +189,26 @@ def test_config_object_mutations_assert(config_filepath):
         ConfigObject(config_filepath, mutations={"a": A()})
 
 
+@pytest.mark.parametrize("mutations", [None, {"a": [1, 2, 3]}])
+def test_config_object_no_modules(mutations, config_filepath2):
+
+    import numpy as np
+
+    config = ConfigObject(config_filepath2, mutations=mutations)
+
+    for k, v in config.items():
+        assert not inspect.ismodule(v), f"{k}: {v}"
+
+    assert "a" in config
+    assert config.a == 1 if mutations is None else [1, 2, 3]
+    assert "arr" in config
+    np.testing.assert_allclose(config.arr, np.array([1, 2, 3]))
+    assert "out" in config
+    assert config.out == 12
+
+
 def test_config_object_mutations_validate(dirname):
-    filepath = os.path.join(dirname, "custom_module.py")
+    filepath = dirname / "custom_module.py"
 
     s = """
 
@@ -197,7 +220,7 @@ def func(x):
 out = func(10)
     """
 
-    with open(filepath, "w") as h:
+    with filepath.open("w") as h:
         h.write(s)
 
     config = ConfigObject(filepath, mutations={"a": 333, "b": 22.0})
@@ -209,7 +232,7 @@ out = func(10)
 def test_load_module(dirname):
     import numpy as np
 
-    filepath = os.path.join(dirname, "custom_module.py")
+    filepath = dirname / "custom_module.py"
 
     s = """
 import numpy as np
@@ -217,7 +240,7 @@ a = 123
 b = np.array([1, 2, 3])
     """
 
-    with open(filepath, "w") as h:
+    with filepath.open("w") as h:
         h.write(s)
 
     custom_module = load_module(filepath)
@@ -226,7 +249,7 @@ b = np.array([1, 2, 3])
     assert custom_module.a == 123
 
     assert "b" in custom_module.__dict__
-    assert np.all(custom_module.b == np.array([1, 2, 3]))
+    np.testing.assert_allclose(custom_module.b, np.array([1, 2, 3]))
 
 
 def test_load_module_wrong_args():
@@ -235,3 +258,40 @@ def test_load_module_wrong_args():
 
     with pytest.raises(ValueError, match=r"should be a file"):
         load_module("/tmp/")
+
+
+def worker_function(config):
+    pass
+
+
+@pytest.mark.parametrize("method", ["fork", "spawn"])
+def test_mp_config(method, config_filepath):
+
+    config = ConfigObject(config_filepath)
+    ctx = mp.get_context(method)
+    p = ctx.Process(target=worker_function, args=(config,))
+    p.start()
+    p.join()
+
+
+def worker_config_checker(config):
+    import numpy as np
+
+    assert "a" in config
+    assert config.a == 123
+
+    assert "b" in config
+    np.testing.assert_allclose(config.b, np.array([1, 2, 3]))
+
+    assert "out" in config
+    assert config.out == 12
+
+
+@pytest.mark.parametrize("method", ["fork", "spawn"])
+def test_mp_config2(method, config_filepath2):
+
+    config = ConfigObject(config_filepath2)
+    ctx = mp.get_context(method)
+    p = ctx.Process(target=worker_config_checker, args=(config,))
+    p.start()
+    p.join()
