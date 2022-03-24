@@ -4,8 +4,10 @@
 
 ```
 pip install py_config_runner numpy
-# Optional
+# Optional for the example with PyTorch
 pip install torch torchvision
+# Optional for the example with PyTorch-Ignite
+pip install torch torchvision pytorch-ignite
 ```
 
 ## Basic example
@@ -58,4 +60,30 @@ python -u main.py --config=configs/baseline_train_pytorch.py
 
 ```
 py_config_runner training.py configs/baseline_train_pytorch.py
+```
+
+## Deep learning example with PyTorch-Ignite
+
+Distributed computations example using `py_config_runner.ConfigObject` (on CPU).
+
+```
+cd ignite
+```
+
+- [`main.py`](ignite/main.py): entrypoint script with argparse accepts a configuration file and
+uses `py_config_runner.ConfigObject` to parse python configuration file.
+
+- [configs/baseline_train_pytorch.py](ignite/configs/baseline_train_pytorch.py): python configuration file with PyTorch model/optimizer/criterion etc.
+
+
+### Run with `torchrun`
+
+```
+torchrun --nproc_per_node=2 main.py --config=configs/baseline_train_pytorch.py
+```
+
+### Spawn processes from `main.py`
+
+```
+python -u main.py --config=configs/baseline_train_pytorch.py --nproc_per_node=2
 ```
