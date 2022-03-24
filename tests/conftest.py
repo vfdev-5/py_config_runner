@@ -31,6 +31,34 @@ data = 4
 
 
 @pytest.fixture
+def config_filepath2():
+    path = Path(tempfile.mkdtemp())
+    config_filepath = path / "config2.py"
+    data = """
+
+import numpy as np
+
+a = 1
+b = 2
+_data = 3
+data = 4
+
+arr = np.array([1, 2, 3])
+
+def func(x):
+    return x + b
+
+out = func(10)
+        """
+
+    with config_filepath.open("w") as h:
+        h.write(data)
+
+    yield config_filepath
+    shutil.rmtree(path.as_posix())
+
+
+@pytest.fixture
 def script_filepath():
     path = Path(tempfile.mkdtemp())
     script_filepath = path / "script.py"
