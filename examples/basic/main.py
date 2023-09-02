@@ -7,7 +7,6 @@ from training import run
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser("Example application")
     parser.add_argument("--config", type=Path, help="Input configuration file")
     args = parser.parse_args()

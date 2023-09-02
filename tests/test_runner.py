@@ -52,7 +52,6 @@ def run():
 
 
 def test_run_script_correct(capsys, script_filepath, config_filepath):  # noqa: F811
-
     run_script(script_filepath, config_filepath)
 
     captured = capsys.readouterr()
@@ -114,7 +113,6 @@ def run(config, local_rank=0, **kwargs):
 
 
 def test_example(example_baseline_config, example_scripts_training, example_path):
-
     import sys
 
     sys.path.insert(0, example_path.as_posix())
