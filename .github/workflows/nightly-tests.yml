@@ -1,0 +1,90 @@
+name: Nightly tests
+
+on:
+  # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
+  schedule:
+    # Run at 00:00 UTC Every Day
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get year & week number
+        id: get-date
+        run: echo "date=$(/bin/date "+%Y-%U")" >> $GITHUB_OUTPUT
+        shell: bash -l {0}
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          python3 -m pip install -U pip
+          echo "pip_cache=$(python3 -m pip cache dir)" >> $GITHUB_OUTPUT
+        shell: bash -l {0}
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/conda_pkgs_dir
+            ${{ steps.pip-cache.outputs.pip_cache }}
+          key: ${{ steps.get-date.outputs.date }}-pytorch-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.pytorch-version }}-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ steps.get-date.outputs.date }}-pytorch-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.pytorch-version }}-
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          python-version: ${{ matrix.python-version }}
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+      - name: Install dependencies and py_config_runner
+        shell: bash -l {0}
+        run: |
+          conda install pytorch torchvision cpuonly numpy -c pytorch
+          pip install pytest-cov codecov mypy
+          python setup.py install
+
+      - name: Run mypy check and tests
+        shell: bash -l {0}
+        run: |
+          mypy --config=mypy.ini
+          pytest --cov py_config_runner --cov-report term-missing -vvv
+
+      - name: Run example (basic)
+        shell: bash -l {0}
+        run: |
+            cd examples/basic
+            python -u main.py --config=configs/baseline_train.py
+            py_config_runner training.py configs/baseline_train.py
+
+      - name: Run example (pytorch)
+        shell: bash -l {0}
+        run: |
+            cd examples/pytorch
+            python -u main.py --config=configs/baseline_train_pytorch.py
+            py_config_runner training.py configs/baseline_train_pytorch.py
+
+      - name: Run example (pytorch-ignite)
+        shell: bash -l {0}
+        run: |
+            cd examples/ignite
+            pip install pytorch-ignite
+            torchrun --nproc_per_node=2 main.py --config=configs/baseline_train_pytorch.py
+            python -u main.py --config=configs/baseline_train_pytorch.py --nproc_per_node=2
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+      
