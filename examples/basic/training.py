@@ -16,7 +16,6 @@ class MyTrainingConfigSchema(Schema):
 
 
 def run(config, **kwargs):
-
     # Let's validate the config
     MyTrainingConfigSchema.validate(config)
 

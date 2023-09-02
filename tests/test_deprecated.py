@@ -20,7 +20,6 @@ class _Config:
 
 
 def test_assert_config():
-
     config = _Config()
     config.a = "a"
     config.b = "b"
@@ -64,7 +63,6 @@ def test_get_params():
 
 @pytest.mark.skipif(not has_torch, reason="No torch installed")
 def test_get_train_params():
-
     from py_config_runner.config_utils import TRAIN_CONFIG
 
     config = _Config()
