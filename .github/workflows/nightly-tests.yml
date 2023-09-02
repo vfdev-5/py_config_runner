@@ -93,7 +93,7 @@ jobs:
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
-      
+
   create-issue:
     runs-on: ubuntu-latest
     # https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
