@@ -8,7 +8,6 @@ from py_config_runner import ConfigObject, load_module
 
 
 def test_config_object(config_filepath):
-
     config = ConfigObject(config_filepath)
     assert "a" in config
     assert config["a"] == config.a == config.get("a") == 1
@@ -191,7 +190,6 @@ def test_config_object_mutations_assert(config_filepath):
 
 @pytest.mark.parametrize("mutations", [None, {"a": [1, 2, 3]}])
 def test_config_object_no_modules(mutations, config_filepath2):
-
     import numpy as np
 
     config = ConfigObject(config_filepath2, mutations=mutations)
@@ -266,7 +264,6 @@ def worker_function(config):
 
 @pytest.mark.parametrize("method", ["fork", "spawn"])
 def test_mp_config(method, config_filepath):
-
     config = ConfigObject(config_filepath)
     ctx = mp.get_context(method)
     p = ctx.Process(target=worker_function, args=(config,))
@@ -289,7 +286,6 @@ def worker_config_checker(config):
 
 @pytest.mark.parametrize("method", ["fork", "spawn"])
 def test_mp_config2(method, config_filepath2):
-
     config = ConfigObject(config_filepath2)
     ctx = mp.get_context(method)
     p = ctx.Process(target=worker_config_checker, args=(config,))

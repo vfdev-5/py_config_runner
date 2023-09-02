@@ -68,7 +68,6 @@ class BaseConfigSchema(Schema):
 
 
 if has_torch:
-
     from py_config_runner.deprecated import TORCH_DL_BASE_CONFIG, TRAIN_CONFIG, TRAINVAL_CONFIG, INFERENCE_CONFIG
 
     class TorchModelConfigSchema(BaseConfigSchema):

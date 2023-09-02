@@ -11,7 +11,6 @@ def runner():
 
 
 def test_command(runner, script_filepath, config_filepath):  # noqa: F811
-
     cmd = [script_filepath.as_posix(), config_filepath.as_posix()]
     result = runner.invoke(command, cmd)
     assert result.exit_code == 0, repr(result) + "\n" + result.output

@@ -3,7 +3,6 @@ from torchvision.datasets import MNIST
 
 
 def get_mnist_data_loaders(path, train_transform, train_batch_size, val_transform, val_batch_size):
-
     train_loader = DataLoader(
         MNIST(download=True, root=path, transform=train_transform, train=True),
         batch_size=train_batch_size,

@@ -27,7 +27,6 @@ class TorchTrainingConfigSchema(Schema):
 
 
 def run(config, **kwargs):
-
     # Let's validate the config
     TorchTrainingConfigSchema.validate(config)
     # and additionally agains built-in TrainConfigSchema

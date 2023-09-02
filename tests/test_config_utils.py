@@ -32,18 +32,15 @@ def setup_config(config_file):
 
 
 def test_base_config_schema(config_filepath):
-
     config = setup_config(config_filepath)
     BaseConfigSchema.validate(config)
 
 
 @pytest.mark.skipif(not has_torch, reason="No torch installed")
 def test_schema_example(config_filepath):
-
     config = setup_config(config_filepath)
 
     class TrainingConfigSchema(Schema):
-
         seed: int
         debug: bool = False
         device: str = "cuda"
@@ -76,11 +73,9 @@ def test_get_params_base(config_filepath):
 
 @pytest.mark.skipif(not has_torch, reason="No torch installed")
 def test_get_params_training(config_filepath):
-
     config = setup_config(config_filepath)
 
     class TrainingConfigSchema(Schema):
-
         seed: int
         debug: bool = False
         device: str = "cuda"
