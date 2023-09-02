@@ -30,5 +30,5 @@ learning_rate = 0.01
 optimizer = SGD(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 
-num_epochs = 5
+num_epochs = 3
 val_interval = 2

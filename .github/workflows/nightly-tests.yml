@@ -72,10 +72,8 @@ jobs:
         run: |
             cd examples/pytorch
 
-            # Replace cuda -> cpu in training.py
-            sed -i "s/cuda/cpu/g" training.py
-            # Replace num_epochs = 5 -> num_epochs = 2 in configs/baseline_train_pytorch.py
-            sed -i "s/num_epochs = 5/num_epochs = 2/g" configs/baseline_train_pytorch.py
+            # # Replace cuda -> cpu in training.py
+            # sed -i "s/cuda/cpu/g" training.py
 
             python -u main.py --config=configs/baseline_train_pytorch.py
             py_config_runner training.py configs/baseline_train_pytorch.py
@@ -84,7 +82,7 @@ jobs:
         shell: bash -l {0}
         run: |
             cd examples/ignite
-            pip install pytorch-ignite
+            pip install pytorch-ignite tensorboard
             torchrun --nproc_per_node=2 main.py --config=configs/baseline_train_pytorch.py
             python -u main.py --config=configs/baseline_train_pytorch.py --nproc_per_node=2
 
