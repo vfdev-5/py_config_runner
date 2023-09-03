@@ -9,8 +9,8 @@ from utils import get_mnist_data_loaders
 
 seed = 12
 debug = False
-train_batch_size = 128
-val_batch_size = 512
+train_batch_size = 16
+val_batch_size = 16
 
 
 train_transform = Compose([RandomHorizontalFlip(), ToTensor(), Normalize((0.1307,), (0.3081,))])

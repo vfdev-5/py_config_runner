@@ -72,8 +72,8 @@ jobs:
         run: |
             cd examples/pytorch
 
-            # # Replace cuda -> cpu in training.py
-            # sed -i "s/cuda/cpu/g" training.py
+            # Replace cuda -> cpu in training.py
+            sed -i "s/cuda/cpu/g" training.py
 
             python -u main.py --config=configs/baseline_train_pytorch.py
             py_config_runner training.py configs/baseline_train_pytorch.py
