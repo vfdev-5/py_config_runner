@@ -86,6 +86,9 @@ jobs:
             torchrun --nproc_per_node=2 main.py --config=configs/baseline_train_pytorch.py
             python -u main.py --config=configs/baseline_train_pytorch.py --nproc_per_node=2
 
+            # remove saved checkpoints:
+            rm -rf /tmp/output
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

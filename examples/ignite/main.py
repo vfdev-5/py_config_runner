@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 from pathlib import Path
 
 import ignite.distributed as idist
@@ -17,7 +18,8 @@ def training(rank, config):
     device = idist.device()
 
     # Define output folder:
-    config.output = "/tmp/output"
+    now = datetime.now().strftime("%Y%m%d-%H%M%S")
+    config.output = f"/tmp/output/{now}"
 
     model = idist.auto_model(config.model)
     optimizer = idist.auto_optim(config.optimizer)
