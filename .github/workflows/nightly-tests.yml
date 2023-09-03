@@ -71,6 +71,10 @@ jobs:
         shell: bash -l {0}
         run: |
             cd examples/pytorch
+
+            # Replace cuda -> cpu in training.py
+            sed -i "s/cuda/cpu/g" training.py
+
             python -u main.py --config=configs/baseline_train_pytorch.py
             py_config_runner training.py configs/baseline_train_pytorch.py
 
@@ -78,13 +82,29 @@ jobs:
         shell: bash -l {0}
         run: |
             cd examples/ignite
-            pip install pytorch-ignite
+            pip install pytorch-ignite tensorboard
             torchrun --nproc_per_node=2 main.py --config=configs/baseline_train_pytorch.py
             python -u main.py --config=configs/baseline_train_pytorch.py --nproc_per_node=2
+
+            # remove saved checkpoints:
+            rm -rf /tmp/output
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
-      
+
+  create-issue:
+    runs-on: ubuntu-latest
+    # https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
+    needs: build
+    if: always() && needs.build.result == 'failure'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: JasonEtco/create-an-issue@v2
+        name: Create issue if pytorch version tests failed
+        with:
+          filename: .github/failed_schedule_issue_template.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
