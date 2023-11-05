@@ -1,5 +1,6 @@
 # Python Configuration and a command line Runner
 
+[![Nightly tests](https://github.com/vfdev-5/py_config_runner/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/vfdev-5/py_config_runner/actions/workflows/nightly-tests.yml)
 [![CircleCI](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master.svg?style=svg)](https://circleci.com/gh/vfdev-5/py_config_runner/tree/master)
 [![codecov](https://codecov.io/gh/vfdev-5/py_config_runner/branch/master/graph/badge.svg)](https://codecov.io/gh/vfdev-5/py_config_runner)
 [![Documentation Status](https://readthedocs.org/projects/py-config-runner/badge/?version=latest)](https://py-config-runner.readthedocs.io/en/latest/?badge=latest)
